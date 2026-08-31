@@ -1,13 +1,14 @@
 <template>
-  <div class="text-xl text-gray-700 dark:text-gray-300" m-5 flex="~ gap3" justify-center>
-    <NuxtLink i-carbon-campsite to="/" aria-label="Home" />
-    <a
-      i-carbon-logo-github
-      href="https://github.com/antfu/vitesse-nuxt"
-      aria-label="Vitesse Nuxt on GitHub"
-      rel="noreferrer"
-      target="_blank"
-    />
-    <DarkToggle />
-  </div>
+  <footer class="site-footer">
+    <p>Built for friendly games, blindfold practice, and a thoughtful computer challenge.</p>
+    <div class="footer-links">
+      <a href="/THIRD_PARTY_NOTICES.txt">Open-source notices</a>
+      <a
+        href="https://github.com/anderson-webops/chess.jacobdanderson.net"
+        aria-label="Jacob Anderson Chess source code on GitHub"
+        rel="noreferrer"
+        target="_blank"
+      >Source code</a>
+    </div>
+  </footer>
 </template>

@@ -19,13 +19,13 @@ for (const requiredPath of [
   'back-end/dist/server.js',
   'front-end/.output/public/index.html',
   'front-end/.output/public/release.json',
-  '.vitesse-release-prepared.json',
+  '.chess-release-prepared.json',
 ]) {
   await access(path.join(repositoryRoot, requiredPath))
 }
 
 const [privateMarker, publicMarker] = await Promise.all([
-  readFile(path.join(repositoryRoot, '.vitesse-release-prepared.json'), 'utf8'),
+  readFile(path.join(repositoryRoot, '.chess-release-prepared.json'), 'utf8'),
   readFile(path.join(repositoryRoot, 'front-end/.output/public/release.json'), 'utf8'),
 ])
 assert.equal(publicMarker, privateMarker)

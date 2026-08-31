@@ -14,16 +14,14 @@ const projectRoot = resolve(scriptDir, '..')
 const frontendPackagePath = resolve(projectRoot, 'front-end/package.json')
 const frontendPackage = JSON.parse(readFileSync(frontendPackagePath, 'utf8'))
 
-const siteName = 'Vitesse Nuxt Template'
+const siteName = 'Jacob Anderson Chess'
 const frontendKind = 'nuxt'
 const frontendPort = Number(process.env.A11Y_FRONTEND_PORT || 3356)
 const apiPort = Number(process.env.A11Y_API_PORT || 3056)
 const baseUrl = `http://127.0.0.1:${frontendPort}`
 const apiUrl = `http://127.0.0.1:${apiPort}/api`
-const routes = [
-  '/',
-  '/hi/a11y',
-]
+const routes = ['/']
+const gameViews = ['board', 'headless']
 const colorSchemes = (process.env.A11Y_COLOR_SCHEMES || 'light,dark')
   .split(',')
   .map(scheme => scheme.trim())
@@ -252,7 +250,7 @@ function closeServer(server) {
   return new Promise(resolveClose => server.close(resolveClose))
 }
 
-async function analyzePage(browser, route, scheme) {
+async function analyzePage(browser, route, scheme, gameView) {
   const url = `${baseUrl}${route}`
   const page = await browser.newPage()
   page.setDefaultTimeout(30_000)
@@ -262,6 +260,10 @@ async function analyzePage(browser, route, scheme) {
   }
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 })
   await page.waitForNetworkIdle({ idleTime: 500, timeout: 8_000 }).catch(() => {})
+  if (gameView === 'headless') {
+    await page.select('#interface-mode', 'headless')
+    await page.waitForSelector('.headless-console')
+  }
   await page.addScriptTag({ path: axeSourcePath })
   const result = await page.evaluate(async () => {
     return await globalThis.axe.run(document, {
@@ -275,8 +277,214 @@ async function analyzePage(browser, route, scheme) {
   await page.close()
   return {
     url,
+    gameView,
     scheme,
     violations: result.violations.filter(violation => violation.id !== 'frame-tested'),
+  }
+}
+
+async function readGameState(page) {
+  return await page.evaluate(() => {
+    const normalize = value => value?.replace(/\s+/g, ' ').trim() ?? null
+    const input = document.querySelector('#notation-move')
+
+    return {
+      boardBusy: document.querySelector('.chessboard')?.getAttribute('aria-busy') ?? null,
+      firstWhiteMove: normalize(document.querySelector('.move-history li span:nth-child(2)')?.textContent),
+      heading: normalize(document.querySelector('.game-panel h3')?.textContent),
+      history: normalize(document.querySelector('.history-heading span')?.textContent),
+      inputDisabled: input instanceof HTMLInputElement ? input.disabled : null,
+      inputValue: input instanceof HTMLInputElement ? input.value : null,
+      interfaceMode: document.querySelector('#interface-mode')?.value ?? null,
+      liveMessage: normalize(document.querySelector('[aria-live="polite"]')?.textContent),
+      opponentMode: document.querySelector('#opponent-mode')?.value ?? null,
+      status: normalize(document.querySelector('.turn-label')?.textContent),
+    }
+  })
+}
+
+async function waitForGameState(page, expected, label, timeoutMs = 10_000) {
+  try {
+    await page.waitForFunction((expectedState) => {
+      const normalize = value => value?.replace(/\s+/g, ' ').trim() ?? null
+      const input = document.querySelector('#notation-move')
+      const currentState = {
+        boardBusy: document.querySelector('.chessboard')?.getAttribute('aria-busy') ?? null,
+        firstWhiteMove: normalize(document.querySelector('.move-history li span:nth-child(2)')?.textContent),
+        heading: normalize(document.querySelector('.game-panel h3')?.textContent),
+        history: normalize(document.querySelector('.history-heading span')?.textContent),
+        inputDisabled: input instanceof HTMLInputElement ? input.disabled : null,
+        inputValue: input instanceof HTMLInputElement ? input.value : null,
+        interfaceMode: document.querySelector('#interface-mode')?.value ?? null,
+        liveMessage: normalize(document.querySelector('[aria-live="polite"]')?.textContent),
+        opponentMode: document.querySelector('#opponent-mode')?.value ?? null,
+        status: normalize(document.querySelector('.turn-label')?.textContent),
+      }
+
+      return Object.entries(expectedState).every(([key, value]) => currentState[key] === value)
+    }, { timeout: timeoutMs }, expected)
+  }
+  catch (error) {
+    const actual = await readGameState(page)
+    throw new Error(`${label}: expected ${JSON.stringify(expected)}, received ${JSON.stringify(actual)}`, { cause: error })
+  }
+}
+
+async function playHeadlessMove(page, move, expectedPlyCount) {
+  await waitForGameState(page, {
+    inputDisabled: false,
+    inputValue: '',
+  }, `Before playing ${move}`)
+
+  await page.type('#notation-move', move)
+  const historyUpdated = page.waitForFunction((expectedHistory) => {
+    return document.querySelector('.history-heading span')?.textContent?.replace(/\s+/g, ' ').trim() === expectedHistory
+  }, { timeout: 10_000 }, `${expectedPlyCount} ${expectedPlyCount === 1 ? 'ply' : 'plies'}`)
+
+  await Promise.all([
+    historyUpdated,
+    page.click('.notation-input-row button[type="submit"]'),
+  ])
+}
+
+async function runGameInteractionSmoke(browser) {
+  const page = await browser.newPage()
+  page.setDefaultTimeout(30_000)
+  await page.setViewport({ width: 1280, height: 1000, deviceScaleFactor: 1 })
+
+  try {
+    await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded', timeout: 30_000 })
+    await page.waitForNetworkIdle({ idleTime: 500, timeout: 8_000 }).catch(() => {})
+    await page.select('#opponent-mode', 'local')
+    await page.select('#interface-mode', 'headless')
+    await page.waitForSelector('.headless-console')
+
+    const activeSession = {
+      interfaceMode: 'headless',
+      opponentMode: 'local',
+    }
+
+    await waitForGameState(page, {
+      ...activeSession,
+      heading: 'White player',
+      history: '0 plies',
+      inputDisabled: false,
+      inputValue: '',
+      status: 'White to move.',
+    }, 'Initial local headless game')
+
+    await playHeadlessMove(page, 'f3', 1)
+    await playHeadlessMove(page, 'e5', 2)
+    await playHeadlessMove(page, 'g4', 3)
+    await playHeadlessMove(page, 'Qh4#', 4)
+    await waitForGameState(page, {
+      ...activeSession,
+      heading: 'Game complete',
+      history: '4 plies',
+      inputDisabled: true,
+      inputValue: '',
+      status: 'Black wins by checkmate.',
+    }, 'Fool\'s Mate terminal state')
+
+    await page.click('.game-actions .secondary-action')
+    await waitForGameState(page, {
+      ...activeSession,
+      heading: 'Black player',
+      history: '3 plies',
+      inputDisabled: false,
+      inputValue: '',
+      status: 'Black to move.',
+    }, 'Undo recovery')
+
+    await playHeadlessMove(page, 'Qh4#', 4)
+    await waitForGameState(page, {
+      ...activeSession,
+      heading: 'Game complete',
+      history: '4 plies',
+      inputDisabled: true,
+      inputValue: '',
+      status: 'Black wins by checkmate.',
+    }, 'Replayed Fool\'s Mate terminal state')
+
+    await page.click('.game-actions .primary-action')
+    await waitForGameState(page, {
+      ...activeSession,
+      heading: 'White player',
+      history: '0 plies',
+      inputDisabled: false,
+      inputValue: '',
+      status: 'White to move.',
+    }, 'New game recovery')
+
+    console.log(`interaction ok: ${baseUrl}/ [local friend, headless, Fool's Mate, Undo, replay, New game]`)
+  }
+  finally {
+    await page.close()
+  }
+}
+
+async function runComputerOpponentSmoke(browser) {
+  const page = await browser.newPage()
+  const browserFailures = []
+  page.setDefaultTimeout(30_000)
+  await page.setViewport({ width: 1280, height: 1000, deviceScaleFactor: 1 })
+  page.on('console', (message) => {
+    if (message.type() === 'error')
+      browserFailures.push(`console error: ${message.text()}`)
+  })
+  page.on('pageerror', error => browserFailures.push(`page error: ${error.message}`))
+  page.on('requestfailed', (request) => {
+    const reason = request.failure()?.errorText ?? 'unknown reason'
+    browserFailures.push(`request failed: ${request.method()} ${request.url()} (${reason})`)
+  })
+
+  try {
+    await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded', timeout: 30_000 })
+    await page.waitForNetworkIdle({ idleTime: 500, timeout: 8_000 }).catch(() => {})
+    await page.waitForSelector('.chessboard [data-square="e2"]')
+
+    const activeSession = {
+      interfaceMode: 'board',
+      opponentMode: 'computer',
+    }
+
+    await waitForGameState(page, {
+      ...activeSession,
+      boardBusy: 'false',
+      heading: 'Your turn',
+      history: '0 plies',
+      status: 'White to move.',
+    }, 'Initial computer game')
+
+    await page.click('[data-square="e2"]')
+    await page.waitForFunction(() => {
+      return document.querySelector('[data-square="e2"]')?.getAttribute('aria-label')?.includes('selected')
+    }, { timeout: 10_000 })
+    await page.click('[data-square="e4"]')
+
+    await waitForGameState(page, {
+      ...activeSession,
+      boardBusy: 'false',
+      firstWhiteMove: 'e4',
+      heading: 'Your turn',
+      history: '2 plies',
+      status: 'White to move.',
+    }, 'Computer reply and returned human turn', 30_000)
+
+    if (browserFailures.length)
+      throw new Error(`Browser failures during computer game: ${browserFailures.join(' | ')}`)
+
+    console.log(`bot interaction ok: ${baseUrl}/ [computer, visible board, e2-e4, worker reply, human turn]`)
+  }
+  catch (error) {
+    if (!browserFailures.length)
+      throw error
+
+    const state = await readGameState(page)
+    throw new Error(`Computer-opponent browser failure: ${browserFailures.join(' | ')}; state ${JSON.stringify(state)}`, { cause: error })
+  }
+  finally {
+    await page.close()
   }
 }
 
@@ -297,18 +505,36 @@ try {
   const failures = []
   for (const route of routes) {
     for (const scheme of colorSchemes) {
-      const result = await analyzePage(browser, route, scheme)
-      if (result.violations.length) {
-        failures.push(result)
-        continue
+      for (const gameView of gameViews) {
+        const result = await analyzePage(browser, route, scheme, gameView)
+        if (result.violations.length) {
+          failures.push(result)
+          continue
+        }
+        console.log(`a11y ok: ${result.url} [${scheme}, ${gameView}]`)
       }
-      console.log(`a11y ok: ${result.url} [${scheme}]`)
     }
+  }
+
+  let interactionFailure
+  try {
+    await runGameInteractionSmoke(browser)
+  }
+  catch (error) {
+    interactionFailure = error
+  }
+
+  let computerOpponentFailure
+  try {
+    await runComputerOpponentSmoke(browser)
+  }
+  catch (error) {
+    computerOpponentFailure = error
   }
 
   if (failures.length) {
     for (const failure of failures) {
-      console.error(`\nAccessibility issues for ${siteName} at ${failure.url} [${failure.scheme}]`)
+      console.error(`\nAccessibility issues for ${siteName} at ${failure.url} [${failure.scheme}, ${failure.gameView}]`)
       for (const violation of failure.violations) {
         console.error(`- [${violation.impact ?? 'unknown'}] ${violation.id}: ${violation.help}`)
         console.error(`  ${violation.helpUrl}`)
@@ -317,6 +543,18 @@ try {
         }
       }
     }
+    process.exitCode = 1
+  }
+
+  if (interactionFailure) {
+    console.error(`\nGame interaction issue for ${siteName} at ${baseUrl}/`)
+    console.error(interactionFailure)
+    process.exitCode = 1
+  }
+
+  if (computerOpponentFailure) {
+    console.error(`\nComputer-opponent interaction issue for ${siteName} at ${baseUrl}/`)
+    console.error(computerOpponentFailure)
     process.exitCode = 1
   }
 }

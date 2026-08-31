@@ -6,9 +6,7 @@ const devApiOrigin = process.env.DEV_API_ORIGIN || 'http://127.0.0.1:3006'
 export default defineNuxtConfig({
   modules: [
     'nuxt-security',
-    '@vueuse/nuxt',
     '@unocss/nuxt',
-    '@pinia/nuxt',
     '@nuxtjs/color-mode',
     '@nuxt/eslint',
   ],
@@ -23,18 +21,19 @@ export default defineNuxtConfig({
     head: {
       viewport: 'width=device-width,initial-scale=1',
       link: [
-        { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
-        { rel: 'icon', type: 'image/svg+xml', href: '/nuxt.svg' },
-        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        { rel: 'icon', type: 'image/svg+xml', href: '/mark.svg' },
+        { rel: 'apple-touch-icon', href: '/mark.svg' },
       ],
       meta: [
         { name: 'description', content: appDescription },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
-        { name: 'theme-color', media: '(prefers-color-scheme: light)', content: 'white' },
-        { name: 'theme-color', media: '(prefers-color-scheme: dark)', content: '#222222' },
+        { name: 'theme-color', media: '(prefers-color-scheme: light)', content: '#f3ead7' },
+        { name: 'theme-color', media: '(prefers-color-scheme: dark)', content: '#111813' },
       ],
     },
   },
+
+  css: ['~/assets/styles/main.css'],
 
   colorMode: {
     classSuffix: '',
@@ -98,6 +97,10 @@ export default defineNuxtConfig({
 
   vite: {
     server: {
+      headers: {
+        'Cross-Origin-Embedder-Policy': 'require-corp',
+        'Cross-Origin-Resource-Policy': 'same-origin',
+      },
       proxy: {
         '/api': {
           changeOrigin: false,

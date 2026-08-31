@@ -1,14 +1,15 @@
 # Workspace Instructions
 
-- This repository is the Nuxt monorepo template derived from `antfu/vitesse-nuxt`.
-- Keep `origin` pointed at the template repository and `upstream` pointed at `antfu/vitesse-nuxt`.
+- This repository is the Jacob Anderson Chess site derived from the local Nuxt monorepo template.
+- Keep `origin` pointed at `anderson-webops/chess.jacobdanderson.net`, `template` pointed at
+  `anderson-webops/vitesse-nuxt-template`, and `upstream` pointed at `antfu/vitesse-nuxt`.
 - Maintain the root npm workspace pattern with exactly two primary workspaces: `front-end` and `back-end`.
-- Use Node 24.18.1 with npm 12.0.2 and validate template changes with `npm run audit:all`, `npm run audit:prod`,
+- Use Node 24.18.1 with npm 12.0.2 and validate site changes with `npm run audit:all`, `npm run audit:prod`,
   `npm run validate`, and `npm run a11y` before pushing.
 - Keep `package-lock.json` up to date whenever dependencies or workspace manifests change.
 - Keep `back-end/package-lock.json` in parity with the backend manifest because the direct API runtime uses it for its
   production-only install.
-- Do not leave completed template work uncommitted or unpushed.
+- Do not leave completed site work uncommitted or unpushed.
 - Preserve the Docker-free direct Nginx/systemd and Netlify adapters so every production path deploys the Express
   backend instead of silently discarding it.
 

@@ -14,14 +14,14 @@ export NUXT_TELEMETRY_DISABLED=1
 export PUPPETEER_SKIP_DOWNLOAD=true
 export SKIP_INSTALL_SIMPLE_GIT_HOOKS=1
 
-release_root="${RELEASE_ROOT:-/srv/vitesse-nuxt-template/releases}"
+release_root="${RELEASE_ROOT:-/srv/chess.jacobdanderson.net/releases}"
 
 if [[ $# -ne 1 ]]; then
-	echo "Usage: prepare-release.sh /srv/vitesse-nuxt-template/releases/<release>" >&2
+	echo "Usage: prepare-release.sh /srv/chess.jacobdanderson.net/releases/<release>" >&2
 	exit 2
 fi
 if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
-	echo "Prepare releases as the unprivileged vitesse-template deployment user, not root." >&2
+	echo "Prepare releases as the unprivileged chess-site deployment user, not root." >&2
 	exit 1
 fi
 
@@ -60,28 +60,30 @@ fi
 
 git -C "$candidate" fetch --quiet origin main --tags
 git -C "$candidate" config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
-export VITESSE_COMMIT_SHA="$(git -C "$candidate" rev-parse HEAD)"
-export VITESSE_VERSION="$(node -p "require('$candidate/package.json').version")"
-export VITESSE_RELEASE="v$VITESSE_VERSION"
-export VITESSE_DEPLOYED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-release_tag="$VITESSE_RELEASE"
+CHESS_COMMIT_SHA="$(git -C "$candidate" rev-parse HEAD)"
+CHESS_VERSION="$(node -p "require('$candidate/package.json').version")"
+export CHESS_RELEASE="v$CHESS_VERSION"
+CHESS_DEPLOYED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+export CHESS_COMMIT_SHA CHESS_VERSION CHESS_DEPLOYED_AT
+release_tag="$CHESS_RELEASE"
 
 if [[ "$(git -C "$candidate" cat-file -t "refs/tags/$release_tag" 2>/dev/null || true)" != "tag" ]]; then
 	echo "$release_tag must exist as an annotated release tag before preparation." >&2
 	exit 1
 fi
-if [[ "$(git -C "$candidate" rev-parse "$release_tag^{}")" != "$VITESSE_COMMIT_SHA" ]]; then
+if [[ "$(git -C "$candidate" rev-parse "$release_tag^{}")" != "$CHESS_COMMIT_SHA" ]]; then
 	echo "$release_tag must peel to the exact candidate revision." >&2
 	exit 1
 fi
-if [[ "$(git -C "$candidate" rev-parse origin/main)" != "$VITESSE_COMMIT_SHA" ]]; then
+if [[ "$(git -C "$candidate" rev-parse origin/main)" != "$CHESS_COMMIT_SHA" ]]; then
 	echo "The release candidate must be the exact fetched origin/main revision." >&2
 	exit 1
 fi
 
 npm_cache="${NPM_CONFIG_CACHE:-$(dirname "$release_root_real")/shared/npm-cache}"
 mkdir -p "$npm_cache"
-export NPM_CONFIG_CACHE="$(cd -- "$npm_cache" && pwd -P)"
+NPM_CONFIG_CACHE="$(cd -- "$npm_cache" && pwd -P)"
+export NPM_CONFIG_CACHE
 
 unset NODE_ENV
 cd -- "$candidate"
@@ -102,4 +104,4 @@ node scripts/prune-direct-runtime.mjs
 node scripts/verify-production-install.mjs
 node scripts/direct-runtime-smoke.mjs
 
-echo "Prepared Docker-free Vitesse Nuxt template runtime $candidate at $VITESSE_COMMIT_SHA."
+echo "Prepared Docker-free Jacob Anderson Chess runtime $candidate at $CHESS_COMMIT_SHA."

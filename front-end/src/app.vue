@@ -1,11 +1,32 @@
 <script setup lang="ts">
-import { appName } from '~/constants'
+import { appDescription, appName } from '~/constants'
+
+const canonicalUrl = 'https://chess.jacobdanderson.net/'
 
 useHead({
   title: appName,
   htmlAttrs: {
     lang: 'en',
   },
+  link: [
+    { href: canonicalUrl, rel: 'canonical' },
+  ],
+})
+
+useSeoMeta({
+  description: appDescription,
+  ogDescription: appDescription,
+  ogImage: `${canonicalUrl}og.png`,
+  ogImageAlt: 'Jacob Anderson Chess: Board or notation. Friend or computer.',
+  ogSiteName: appName,
+  ogTitle: appName,
+  ogType: 'website',
+  ogUrl: canonicalUrl,
+  title: appName,
+  twitterCard: 'summary_large_image',
+  twitterDescription: appDescription,
+  twitterImage: `${canonicalUrl}og.png`,
+  twitterTitle: appName,
 })
 </script>
 
@@ -14,29 +35,3 @@ useHead({
     <NuxtPage />
   </NuxtLayout>
 </template>
-
-<style>
-html,
-body,
-#__nuxt {
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  color: #111827;
-  background: #fff;
-}
-
-html.dark {
-  color: #f3f4f6;
-  background: #111827;
-  color-scheme: dark;
-}
-
-body {
-  color: inherit;
-  background: inherit;
-}
-</style>

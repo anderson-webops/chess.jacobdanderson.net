@@ -1,8 +1,8 @@
 {
 	"name": "back-end",
-	"version": "2.1.0",
+	"version": "1.0.0",
 	"private": true,
-	"description": "Minimal Express API for the vitesse-nuxt monorepo template.",
+	"description": "Hardened Express health API for Jacob Anderson Chess.",
 	"type": "module",
 	"packageManager": "npm@12.0.2",
 	"engines": {
@@ -28,17 +28,17 @@
 	"dependencies": {
 		"dotenv": "^17.4.2",
 		"express": "^5.2.1",
-		"express-rate-limit": "^8.6.1",
+		"express-rate-limit": "^8.7.0",
 		"helmet": "^8.1.0"
 	},
 	"devDependencies": {
 		"@types/express": "^5.0.6",
 		"@types/node": "^24.13.3",
 		"@types/supertest": "^7.2.1",
-		"globals": "^17.8.0",
+		"globals": "^17.11.0",
 		"supertest": "^7.2.2",
-		"tsx": "^4.23.4",
-		"typescript-eslint": "^8.65.0",
-		"vitest": "^4.1.10"
+		"tsx": "^4.23.13",
+		"typescript-eslint": "^8.68.0",
+		"vitest": "^4.1.11"
 	}
 }

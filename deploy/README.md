@@ -7,15 +7,15 @@ Compose, Podman, or container-registry dependency.
 ## First direct rollout
 
 1. Install Node `24.18.1` at `/usr/bin/node`. Run `sudo deploy/systemd/install-service.sh`; this creates the
-   unprivileged `vitesse-template` account and release directories but does not start the service.
-2. Copy the contents of `deploy/nginx/vitesse-nuxt-template.server.conf` into the existing certificate-covered TLS
+   unprivileged `chess-site` account and release directories but does not start the service.
+2. Copy the contents of `deploy/nginx/chess.jacobdanderson.net.server.conf` into the existing certificate-covered TLS
    server block. Retain its IPv4 and IPv6 listeners, test the complete Nginx configuration, and reload it only after a
    release is prepared.
-3. Check out the annotated release tag beneath `/srv/vitesse-nuxt-template/releases` as `vitesse-template`, then run:
+3. Check out the annotated release tag beneath `/srv/chess.jacobdanderson.net/releases` as `chess-site`, then run:
 
    ```bash
-   NPM_CONFIG_CACHE=/srv/vitesse-nuxt-template/shared/npm-cache \
-   deploy/systemd/prepare-release.sh /srv/vitesse-nuxt-template/releases/<release>
+   NPM_CONFIG_CACHE=/srv/chess.jacobdanderson.net/shared/npm-cache \
+   deploy/systemd/prepare-release.sh /srv/chess.jacobdanderson.net/releases/<release>
    ```
 
    Preparation rejects source-local environment files and requires a clean checkout at the exact fetched
@@ -24,8 +24,8 @@ Compose, Podman, or container-registry dependency.
 4. Promote as root with the certificate-covered hostname:
 
    ```bash
-   sudo PUBLIC_HOST=site.example \
-   deploy/systemd/promote-release.sh /srv/vitesse-nuxt-template/releases/<release>
+   sudo PUBLIC_HOST=chess.jacobdanderson.net \
+   deploy/systemd/promote-release.sh /srv/chess.jacobdanderson.net/releases/<release>
    ```
 
    Promotion atomically selects the candidate, restarts the API, reloads Nginx, and verifies API health, exact release

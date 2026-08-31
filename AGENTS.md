@@ -31,20 +31,20 @@
 
 ## Testing & Verification
 
-- Run `npm run lint`, `npm run typecheck`, and `npm run build` before pushing template changes.
+- Run `npm run lint`, `npm run typecheck`, and `npm run build` before pushing site changes.
 - When changing API behavior, verify both the front-end call site and the Express route behavior together.
 - Keep browser API traffic same-origin at `/api`; deployment adapters must route that path to the Express app.
 - Preserve both Docker-free production adapters: direct Nginx/systemd and Netlify. Do not compile and discard the
   backend in either production path.
-- Treat template breakage as high impact: small config changes can affect every downstream repo created from this
-  template.
+- Treat chess-controller breakage as high impact: the visible board, notation interface, and bot share one game state.
 
-## Template Workflow
+## Repository Workflow
 
-- `origin` is the published template repo for this monorepo pattern.
+- `origin` is the published `anderson-webops/chess.jacobdanderson.net` site repository.
+- `template` points to `anderson-webops/vitesse-nuxt-template` for selective template updates.
 - `upstream` must continue to point to `antfu/vitesse-nuxt`.
-- Preserve the front-end/back-end workspace structure when evolving the template unless a deliberate template version
-  change is being made.
+- Preserve the front-end/back-end workspace structure when evolving the site unless a deliberate architecture change
+  is being made.
 
 ## Agent Delivery Workflow
 

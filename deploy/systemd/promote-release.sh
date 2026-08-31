@@ -4,14 +4,14 @@ set -euo pipefail
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
 
-release_root="${RELEASE_ROOT:-/srv/vitesse-nuxt-template/releases}"
-current_link="${CURRENT_LINK:-/srv/vitesse-nuxt-template/current}"
-service_name="${SERVICE_NAME:-vitesse-nuxt-template-api.service}"
+release_root="${RELEASE_ROOT:-/srv/chess.jacobdanderson.net/releases}"
+current_link="${CURRENT_LINK:-/srv/chess.jacobdanderson.net/current}"
+service_name="${SERVICE_NAME:-chess-jacobdanderson-net-api.service}"
 health_url="${HEALTH_URL:-http://127.0.0.1:3006/api/health}"
 public_host="${PUBLIC_HOST:-}"
 
 if [[ $# -ne 1 ]]; then
-	echo "Usage: PUBLIC_HOST=site.example promote-release.sh /srv/vitesse-nuxt-template/releases/<prepared-release>" >&2
+	echo "Usage: PUBLIC_HOST=chess.jacobdanderson.net promote-release.sh /srv/chess.jacobdanderson.net/releases/<prepared-release>" >&2
 	exit 2
 fi
 if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
@@ -28,8 +28,8 @@ if [[ -z "$public_host" || ! "$public_host" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z
 fi
 
 public_origin="${PUBLIC_ORIGIN:-https://$public_host}"
-resolve_ipv4="${VITESSE_RESOLVE_IPV4:-$public_host:443:127.0.0.1}"
-resolve_ipv6="${VITESSE_RESOLVE_IPV6:-$public_host:443:[::1]}"
+resolve_ipv4="${CHESS_RESOLVE_IPV4:-$public_host:443:127.0.0.1}"
+resolve_ipv6="${CHESS_RESOLVE_IPV6:-$public_host:443:[::1]}"
 release_root_real="$(cd -- "$release_root" && pwd -P)"
 candidate="$(cd -- "$1" && pwd -P)"
 case "$candidate/" in
@@ -42,7 +42,7 @@ if [[ "$candidate" == "$release_root_real" ]]; then
 fi
 
 for required_path in \
-	.vitesse-release-prepared.json \
+	.chess-release-prepared.json \
 	back-end/dist/server.js \
 	back-end/node_modules/express/package.json \
 	front-end/.output/public/index.html \
@@ -72,7 +72,7 @@ if [[ -L "$current_link" ]]; then
 		"$release_root_real/"*) ;;
 		*) echo "Existing deployment target is outside $release_root_real: $previous_target" >&2; exit 1 ;;
 	esac
-	if [[ ! -f "$previous_target/.vitesse-release-prepared.json" ]]; then
+	if [[ ! -f "$previous_target/.chess-release-prepared.json" ]]; then
 		echo "Existing direct release is missing its rollback identity." >&2
 		exit 1
 	fi
@@ -83,6 +83,7 @@ response_health="$(mktemp)"
 response_release="$(mktemp)"
 headers_ipv4="$(mktemp)"
 headers_ipv6="$(mktemp)"
+# shellcheck disable=SC2329 # Invoked by the EXIT trap below.
 cleanup() {
 	if [[ -L "$next_link" ]]; then unlink -- "$next_link"; fi
 	rm -f -- "$response_health" "$response_release" "$headers_ipv4" "$headers_ipv6"
@@ -133,9 +134,9 @@ edge_status() {
 
 wait_for_target() {
 	local target="$1"
-	local marker="$target/.vitesse-release-prepared.json"
-	local attempt
-	for attempt in {1..40}; do
+	local marker="$target/.chess-release-prepared.json"
+	local _attempt
+	for _attempt in {1..40}; do
 		if curl --noproxy '*' --fail --silent --show-error --max-time 5 "$health_url" --output "$response_health" \
 			&& health_is_minimal "$response_health" \
 			&& curl --noproxy '*' --ipv4 --fail --silent --show-error --max-time 5 --resolve "$resolve_ipv4" \

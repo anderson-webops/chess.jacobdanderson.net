@@ -15,20 +15,20 @@ fi
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 
-if ! getent group vitesse-template >/dev/null; then
-	groupadd --system vitesse-template
+if ! getent group chess-site >/dev/null; then
+	groupadd --system chess-site
 fi
-if ! id vitesse-template >/dev/null 2>&1; then
-	useradd --system --gid vitesse-template --home-dir /srv/vitesse-nuxt-template --shell /usr/sbin/nologin vitesse-template
+if ! id chess-site >/dev/null 2>&1; then
+	useradd --system --gid chess-site --home-dir /srv/chess.jacobdanderson.net --shell /usr/sbin/nologin chess-site
 fi
 
-install -d -o vitesse-template -g vitesse-template -m 0750 /srv/vitesse-nuxt-template
-install -d -o vitesse-template -g vitesse-template -m 0750 /srv/vitesse-nuxt-template/releases
-install -d -o vitesse-template -g vitesse-template -m 0750 /srv/vitesse-nuxt-template/shared
-install -d -o vitesse-template -g vitesse-template -m 0700 /srv/vitesse-nuxt-template/shared/npm-cache
-install -o root -g root -m 0644 "$script_dir/vitesse-nuxt-template-api.service" /etc/systemd/system/vitesse-nuxt-template-api.service
+install -d -o chess-site -g chess-site -m 0750 /srv/chess.jacobdanderson.net
+install -d -o chess-site -g chess-site -m 0750 /srv/chess.jacobdanderson.net/releases
+install -d -o chess-site -g chess-site -m 0750 /srv/chess.jacobdanderson.net/shared
+install -d -o chess-site -g chess-site -m 0700 /srv/chess.jacobdanderson.net/shared/npm-cache
+install -o root -g root -m 0644 "$script_dir/chess-jacobdanderson-net-api.service" /etc/systemd/system/chess-jacobdanderson-net-api.service
 
 systemctl daemon-reload
-systemctl enable vitesse-nuxt-template-api.service
+systemctl enable chess-jacobdanderson-net-api.service
 
-echo "Installed the Docker-free Vitesse template API service without starting it. Install the Nginx server snippet and promote a prepared release."
+echo "Installed the Docker-free chess API service without starting it. Install the Nginx server snippet and promote a prepared release."

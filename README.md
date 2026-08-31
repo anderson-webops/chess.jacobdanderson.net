@@ -1,21 +1,38 @@
-# Vitesse Nuxt Full-Stack Template
+# Jacob Anderson Chess
 
-This repository adapts [antfu/vitesse-nuxt](https://github.com/antfu/vitesse-nuxt) into an npm workspace with two intentionally separate applications:
+A browser chess game with two presentation modes and two opponent modes:
 
-- `front-end/`: a statically generated Nuxt 4 application
-- `back-end/`: a standalone Express 5 API
+- Play on an accessible, responsive board or entirely through SAN and coordinate notation.
+- Play local human versus human on one device or human versus the built-in computer.
+- Choose White or Black and select one of three computer search strengths.
+- Undo moves, flip the board, inspect legal moves, and read FEN and PGN state.
 
-The browser always calls the API through the same-origin `/api` path. Local development, direct Nginx/systemd
-production, and Netlify each route that path to the Express application without enabling broad CORS access.
+The live application is designed for `https://chess.jacobdanderson.net`.
 
-## Supported toolchain
+## How the game works
 
-- Node.js `24.18.1`
-- npm `12.0.2`
+The Nuxt frontend owns an in-memory game session. `chess.js` is the rules authority for legal moves, check, checkmate,
+stalemate, castling, en passant, promotion, repetition, the fifty-move rule, insufficient material, FEN, SAN, and PGN.
+The board and headless notation interface operate on the same game instance, so switching views never changes the
+position.
 
-Use the repository root for all package operations. The committed npm lockfile includes optional native packages for Linux ARM64 glibc and musl deployments, and npm rejects unreviewed dependency install scripts.
+The computer is a deterministic alpha-beta-pruned negamax player. Its evaluation combines material, centralization,
+pawn advancement, castling, checks, and terminal outcomes. Difficulty controls search depth and a bounded node budget.
+It runs in an isolated browser worker, keeping the page responsive while it searches. No account, network service,
+telemetry, or GPL engine binary is required.
 
-npm uses the nested install strategy so optional peer packages from unrelated tools cannot leak across workspace boundaries. Direct build-time type and lint dependencies are declared explicitly rather than relying on accidental hoisting.
+Human versus human means same-device pass-and-play. This release does not claim remote matchmaking or network rooms.
+
+## Project structure
+
+- `front-end/`: Nuxt 4 static application, game UI, chess controller, and controller tests
+- `back-end/`: standalone Express 5 health API retained for both production adapters
+- `deploy/`: Docker-free Nginx and systemd production adapter
+- `netlify/`: Netlify adapter for the same Express API
+
+## Local development
+
+Use Node.js `24.18.1` and npm `12.0.2` from the repository root.
 
 ```bash
 npm ci
@@ -23,7 +40,8 @@ npm run server
 npm run dev
 ```
 
-The API listens on `127.0.0.1:3006` by default, while Nuxt listens on port `3333` and proxies `/api` to it. Copy `.env.example` only when local listener settings need to change.
+The frontend normally listens on `http://localhost:3333`; the API listens on `127.0.0.1:3006`. Browser API traffic
+stays same-origin at `/api`.
 
 ## Validation
 
@@ -34,51 +52,40 @@ npm run validate
 npm run a11y
 ```
 
-`npm run validate` checks Linux ARM64 lockfile entries, linting, type safety, API behavior, both production builds, and the expected deployment artifacts.
-
-## API contract
-
-The starter API is deliberately public and read-only:
-
-- `GET /api/health` returns `{ "ok": true }` with no-store caching.
-- `HEAD` and `OPTIONS` are permitted.
-- Other methods return `405`, and unknown routes return JSON `404` responses.
-
-There are no accounts, sessions, roles, promotion, or demotion workflows in this template. Do not infer authorization from the frontend, CORS, or a hidden route. Any downstream application that adds protected data must add authenticated, server-enforced authorization and tests at the Express boundary. See `docs/security-model.md`.
+`npm run validate` checks native bindings, lint, TypeScript, chess and API tests, production builds, and the expected
+Netlify and direct deployment outputs. The accessibility smoke test checks both board and headless interfaces in light
+and dark themes.
 
 ## Direct production deployment
 
-Production does not use Docker or Compose. Nginx serves the generated Nuxt files and proxies `/api` to a loopback-only
-Node process running as the unprivileged `vitesse-template` account under a hardened systemd service. Release
-preparation requires the exact annotated tag and fetched `origin/main`, performs clean development and production-only
-installs, audits and package-provenance checks, code/browser/accessibility validation, and a real direct runtime smoke
-test. Promotion selects the prepared release atomically and rolls back automatically unless health, exact release
-identity, strict headers, and the read-only API policy pass over both local IPv4 and IPv6 TLS paths.
+Production can use static Nuxt output served by Nginx plus the compiled Express API under a hardened, loopback-only
+systemd service. It does not require Docker.
 
 ```bash
 sudo deploy/systemd/install-service.sh
-# Install deploy/nginx/vitesse-nuxt-template.server.conf inside the certificate-covered TLS server.
-deploy/systemd/prepare-release.sh /srv/vitesse-nuxt-template/releases/<release>
-sudo PUBLIC_HOST=site.example deploy/systemd/promote-release.sh /srv/vitesse-nuxt-template/releases/<release>
+# Install deploy/nginx/chess.jacobdanderson.net.server.conf in the certificate-covered TLS server.
+deploy/systemd/prepare-release.sh /srv/chess.jacobdanderson.net/releases/<release>
+sudo PUBLIC_HOST=chess.jacobdanderson.net \
+  deploy/systemd/promote-release.sh /srv/chess.jacobdanderson.net/releases/<release>
 ```
 
-See `deploy/README.md` for the exact rollout and rollback contract. The direct API never binds a public interface.
+See `deploy/README.md` for preparation, promotion, health, identity, and rollback gates.
 
 ## Netlify deployment
 
-Netlify generates the Nuxt frontend and bundles the same Express app as `netlify/functions/api.ts`. The first rewrite in `netlify.toml` sends `/api/*` to that function before the static SPA fallback. Node and npm versions are pinned in the repository and in Netlify configuration.
+`netlify.toml` generates `front-end/.output/public` and routes `/api/*` to the bundled Express function before the SPA
+fallback. Node and npm versions are pinned.
 
-## Configuration
+## Provenance and licenses
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `HOST` | `127.0.0.1` | API listener address |
-| `PORT` | `3006` | API listener port |
-| `TRUST_PROXY_HOPS` | `0` | Number of explicitly trusted reverse-proxy hops; direct production and Netlify set `1` |
-| `DEV_API_ORIGIN` | `http://127.0.0.1:3006` | Nuxt development proxy target; it is never sent to browsers |
+This app was informed by the headless minimax concepts in Jacob Anderson's CS 240 `softwareconstruction` chess work,
+but it does not copy the legacy Java server or database layer. The current site uses a maintained TypeScript rules
+engine and a new browser UI.
 
-Do not commit secrets. This starter requires none.
+Project source is MIT licensed. `chess.js` is BSD-2-Clause; its required notice is in `THIRD_PARTY_NOTICES.md`.
 
 ## Git remotes
 
-`origin` is the published monorepo template. `upstream` remains connected to `antfu/vitesse-nuxt` for selective upstream review; the workspace split is intentionally maintained locally.
+- `origin`: `anderson-webops/chess.jacobdanderson.net`
+- `template`: `anderson-webops/vitesse-nuxt-template`
+- `upstream`: `antfu/vitesse-nuxt`
