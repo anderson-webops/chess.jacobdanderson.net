@@ -303,6 +303,81 @@ async function readGameState(page) {
   })
 }
 
+async function assertBoardGeometry(page, label, expectedSize) {
+  const geometry = await page.evaluate(() => {
+    const board = document.querySelector('.chessboard')
+    if (!(board instanceof HTMLElement))
+      return null
+
+    const boardRect = board.getBoundingClientRect()
+    const squares = [...board.querySelectorAll(':scope > .square')].map((square) => {
+      const rect = square.getBoundingClientRect()
+      return {
+        height: rect.height,
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+      }
+    })
+
+    return {
+      board: {
+        height: boardRect.height,
+        width: boardRect.width,
+      },
+      squares,
+    }
+  })
+
+  const tolerance = 1
+  const fail = (reason) => {
+    throw new Error(`${label}: ${reason}; geometry ${JSON.stringify(geometry)}`)
+  }
+  const clusterPositions = (values) => {
+    const positions = []
+    for (const value of [...values].sort((left, right) => left - right)) {
+      const position = positions.find(entry => Math.abs(entry.value - value) <= tolerance)
+      if (position)
+        position.count += 1
+      else
+        positions.push({ count: 1, value })
+    }
+    return positions
+  }
+
+  if (!geometry)
+    fail('visible board was not found')
+  if (geometry.squares.length !== 64)
+    fail(`expected 64 squares, received ${geometry.squares.length}`)
+  if (Math.abs(geometry.board.width - geometry.board.height) > tolerance)
+    fail(`board is not square (${geometry.board.width} x ${geometry.board.height})`)
+
+  const widths = geometry.squares.map(square => square.width)
+  const heights = geometry.squares.map(square => square.height)
+  if (Math.max(...widths) - Math.min(...widths) > tolerance)
+    fail('square widths are not equal')
+  if (Math.max(...heights) - Math.min(...heights) > tolerance)
+    fail('square heights are not equal')
+  if (geometry.squares.some(square => Math.abs(square.width - square.height) > tolerance))
+    fail('one or more cells are not square')
+
+  const columns = clusterPositions(geometry.squares.map(square => square.left))
+  const rows = clusterPositions(geometry.squares.map(square => square.top))
+  if (columns.length !== 8 || columns.some(column => column.count !== 8))
+    fail(`expected eight columns of eight squares, received ${JSON.stringify(columns)}`)
+  if (rows.length !== 8 || rows.some(row => row.count !== 8))
+    fail(`expected eight rows of eight squares, received ${JSON.stringify(rows)}`)
+
+  if (expectedSize) {
+    if (Math.abs(geometry.board.width - expectedSize.width) > tolerance
+      || Math.abs(geometry.board.height - expectedSize.height) > tolerance) {
+      fail(`board changed size from ${expectedSize.width} x ${expectedSize.height}`)
+    }
+  }
+
+  return geometry.board
+}
+
 async function waitForGameState(page, expected, label, timeoutMs = 10_000) {
   try {
     await page.waitForFunction((expectedState) => {
@@ -455,6 +530,7 @@ async function runComputerOpponentSmoke(browser) {
       history: '0 plies',
       status: 'White to move.',
     }, 'Initial computer game')
+    const initialBoardSize = await assertBoardGeometry(page, 'Initial desktop board')
 
     await page.click('[data-square="e2"]')
     await page.waitForFunction(() => {
@@ -470,11 +546,25 @@ async function runComputerOpponentSmoke(browser) {
       history: '2 plies',
       status: 'White to move.',
     }, 'Computer reply and returned human turn', 30_000)
+    await assertBoardGeometry(page, 'Moved desktop board', initialBoardSize)
+
+    await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 })
+    const movedMobileBoardSize = await assertBoardGeometry(page, 'Moved mobile board')
+
+    await page.click('.game-actions .primary-action')
+    await waitForGameState(page, {
+      ...activeSession,
+      boardBusy: 'false',
+      heading: 'Your turn',
+      history: '0 plies',
+      status: 'White to move.',
+    }, 'Reset mobile computer game')
+    await assertBoardGeometry(page, 'Reset mobile board', movedMobileBoardSize)
 
     if (browserFailures.length)
       throw new Error(`Browser failures during computer game: ${browserFailures.join(' | ')}`)
 
-    console.log(`bot interaction ok: ${baseUrl}/ [computer, visible board, e2-e4, worker reply, human turn]`)
+    console.log(`bot interaction ok: ${baseUrl}/ [computer, stable visible board, e2-e4, worker reply, responsive reset]`)
   }
   catch (error) {
     if (!browserFailures.length)

@@ -1,7 +1,7 @@
 {
   "name": "front-end",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Static Nuxt frontend for Jacob Anderson Chess.",
   "author": "Jacob Anderson",
