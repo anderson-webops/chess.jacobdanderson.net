@@ -12,6 +12,8 @@ const key = `${root}/fixture.key`
 const generated = spawnSync('/usr/bin/openssl', [
   'req',
   '-x509',
+  '-config',
+  '/dev/null',
   '-newkey',
   'rsa:2048',
   '-nodes',
