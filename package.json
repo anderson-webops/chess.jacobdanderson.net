@@ -1,7 +1,7 @@
 {
 	"name": "chess-jacobdanderson-net",
 	"type": "module",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"private": true,
 	"packageManager": "npm@12.0.2",
 	"engines": {
@@ -43,7 +43,10 @@
 		"check:deploy-output": "node scripts/check-deploy-output.mjs",
 		"verify:production-install": "node scripts/verify-production-install.mjs",
 		"test:direct-runtime": "node scripts/direct-runtime-smoke.mjs",
-		"validate": "npm run check:native-bindings && npm run lint && npm run typecheck && npm run test && npm run build && npm run check:deploy-output && npm run check:api-install"
+		"validate": "npm run check:native-bindings && npm run lint && npm run typecheck && npm run test && npm run test:artifact && npm run build && npm run check:deploy-output && npm run check:api-install",
+		"test:artifact": "python3 -B scripts/test_runtime_artifact.py",
+		"test:promotion": "bash scripts/test-promotion-recovery.sh",
+		"package:runtime": "bash scripts/package-runtime.sh"
 	},
 	"dependencies": {
 		"serverless-http": "^4.0.0"
@@ -94,8 +97,9 @@
 		"fast-uri": "3.1.6",
 		"nanoid": "3.3.18",
 		"postcss": "8.5.24",
-		"svgo": "4.0.2",
+		"svgo": "4.1.0",
 		"tar": "7.5.22",
-		"valibot": "1.4.2"
+		"valibot": "1.4.2",
+		"qs": "6.16.0"
 	}
 }

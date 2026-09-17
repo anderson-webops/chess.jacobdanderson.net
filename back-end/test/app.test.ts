@@ -5,6 +5,33 @@ import { createApp } from '../src/app.js'
 import { readServerConfig } from '../src/server-config.js'
 
 describe('API security contract', () => {
+  it('provides minimal GET/HEAD probes and fails readiness closed', async () => {
+    let ready = true
+    let stopping = false
+    const app = createApp({ isReady: () => ready, isStopping: () => stopping })
+    for (const path of ['/healthz', '/readyz', '/api/healthz', '/api/readyz']) {
+      for (const method of ['get', 'head'] as const) {
+        const response = await request(app)[method](path).expect(200)
+        expect(response.headers['cache-control']).toBe('no-store')
+        expect(response.headers['set-cookie']).toBeUndefined()
+        expect(response.headers.location).toBeUndefined()
+        expect(response.headers['x-powered-by']).toBeUndefined()
+        if (method === 'get') expect(response.body).toEqual({ ok: true })
+        else expect(response.text).toBeUndefined()
+      }
+    }
+    ready = false
+    await request(app).get('/readyz').expect(503, { ok: false })
+    await request(app).head('/readyz').expect(503)
+    await request(app).get('/healthz').expect(200, { ok: true })
+    ready = true
+    await request(app).get('/readyz').expect(200, { ok: true })
+    stopping = true
+    await request(app).get('/readyz').expect(503, { ok: false })
+    await request(app).get('/api/health').expect(200, { ok: true })
+    await request(app).get('/api/missing').expect(503)
+    await request(createApp({ isReady: () => { throw new Error('private dependency detail') } })).get('/readyz').expect(503, { ok: false })
+  })
   it('serves a minimal, uncached health response with security headers', async () => {
     const response = await request(createApp()).get('/api/health').expect(200)
 

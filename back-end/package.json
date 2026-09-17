@@ -1,6 +1,6 @@
 {
 	"name": "back-end",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"private": true,
 	"description": "Hardened Express health API for Jacob Anderson Chess.",
 	"type": "module",
@@ -40,5 +40,8 @@
 		"tsx": "^4.23.13",
 		"typescript-eslint": "^8.68.0",
 		"vitest": "^4.1.11"
+	},
+	"overrides": {
+		"qs": "6.16.0"
 	}
 }

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 system_path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-node_bin_dir="${NODE_BIN_DIR:-/usr/bin}"
+node_bin_dir="${NODE_BIN_DIR:-/opt/node-24.18.1/bin}"
 if [[ "$node_bin_dir" != /* ]] || [[ ! -x "$node_bin_dir/node" ]] || [[ ! -x "$node_bin_dir/npm" ]]; then
 	echo "NODE_BIN_DIR must be an absolute directory containing executable node and npm binaries." >&2
 	exit 1
@@ -14,10 +14,10 @@ export NUXT_TELEMETRY_DISABLED=1
 export PUPPETEER_SKIP_DOWNLOAD=true
 export SKIP_INSTALL_SIMPLE_GIT_HOOKS=1
 
-release_root="${RELEASE_ROOT:-/srv/chess.jacobdanderson.net/releases}"
+release_root="${BUILD_ROOT:-${RELEASE_ROOT:-/srv/chess.jacobdanderson.net/builds}}"
 
 if [[ $# -ne 1 ]]; then
-	echo "Usage: prepare-release.sh /srv/chess.jacobdanderson.net/releases/<release>" >&2
+	echo "Usage: prepare-release.sh /srv/chess.jacobdanderson.net/builds/<release>" >&2
 	exit 2
 fi
 if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
@@ -50,7 +50,7 @@ for environment_directory in "$candidate" "$candidate/front-end" "$candidate/bac
 			echo "Release preparation refuses source-local environment files: $environment_file" >&2
 			exit 1
 		fi
-	done < <(find "$environment_directory" -maxdepth 1 -type f \( -name '.env' -o -name '.env.*' \) -print0)
+	done < <(find "$environment_directory" -maxdepth 1 \( -name '.env' -o -name '.env.*' \) -print0)
 done
 
 if [[ "$(node --version)" != "v24.18.1" || "$(npm --version)" != "12.0.2" ]]; then
@@ -58,10 +58,14 @@ if [[ "$(node --version)" != "v24.18.1" || "$(npm --version)" != "12.0.2" ]]; th
 	exit 1
 fi
 
+case "$(git -C "$candidate" remote get-url origin)" in
+  git@github.com:anderson-webops/chess.jacobdanderson.net.git|https://github.com/anderson-webops/chess.jacobdanderson.net.git|https://github.com/anderson-webops/chess.jacobdanderson.net) ;;
+  *) echo 'origin must be the canonical Chess repository.' >&2; exit 1;;
+esac
 git -C "$candidate" fetch --quiet origin main --tags
 git -C "$candidate" config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
 CHESS_COMMIT_SHA="$(git -C "$candidate" rev-parse HEAD)"
-CHESS_VERSION="$(node -p "require('$candidate/package.json').version")"
+CHESS_VERSION="$(node -p 'require(process.argv[1]).version' "$candidate/package.json")"
 export CHESS_RELEASE="v$CHESS_VERSION"
 CHESS_DEPLOYED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 export CHESS_COMMIT_SHA CHESS_VERSION CHESS_DEPLOYED_AT

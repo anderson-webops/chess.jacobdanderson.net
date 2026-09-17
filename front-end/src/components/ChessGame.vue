@@ -210,42 +210,43 @@ function queueBotMove() {
       return
     }
 
-    const worker = new Worker(new URL('../workers/chess-bot.worker.ts', import.meta.url), { type: 'module' })
-    botWorker = worker
-
-    worker.onmessage = (event: MessageEvent<BotWorkerResponse>) => {
-      if (generation !== botGeneration || event.data.id !== generation)
-        return
-
-      worker.terminate()
-      botWorker = undefined
-      isBotThinking.value = false
-
-      if (!event.data.move) {
-        refresh(describePosition(game))
-        return
-      }
-
-      try {
-        const playedMove = game.move(event.data.move)
-        applyCompletedMove(playedMove, 'Computer')
-      }
-      catch {
-        refresh('The computer could not apply its move. Start a new game or undo the last move.')
-      }
-    }
-
-    worker.onerror = () => {
+    const failBotMove = () => {
       if (generation !== botGeneration)
         return
-
-      worker.terminate()
-      botWorker = undefined
-      isBotThinking.value = false
+      cancelBotMove()
       liveMessage.value = 'The computer could not calculate a move. Start a new game or undo the last move.'
     }
 
-    worker.postMessage({ fen: game.fen(), id: generation, level: botLevel.value })
+    try {
+      const worker = new Worker(new URL('../workers/chess-bot.worker.ts', import.meta.url), { type: 'module' })
+      botWorker = worker
+      botTimer = setTimeout(failBotMove, 15_000)
+
+      worker.onmessage = (event: MessageEvent<BotWorkerResponse>) => {
+        if (generation !== botGeneration || event.data.id !== generation)
+          return
+
+        cancelBotMove()
+        if (!event.data.move) {
+          refresh(describePosition(game))
+          return
+        }
+
+        try {
+          const playedMove = game.move(event.data.move)
+          applyCompletedMove(playedMove, 'Computer')
+        }
+        catch {
+          refresh('The computer could not apply its move. Start a new game or undo the last move.')
+        }
+      }
+      worker.onerror = failBotMove
+      worker.onmessageerror = failBotMove
+      worker.postMessage({ fen: game.fen(), id: generation, level: botLevel.value })
+    }
+    catch {
+      failBotMove()
+    }
   }, 260)
 }
 

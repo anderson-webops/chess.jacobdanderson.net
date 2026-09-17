@@ -19,7 +19,8 @@
 - `npm run lint` runs ESLint across both workspaces.
 - `npm run build` generates the static front-end to `front-end/.output/public` and compiles the back-end to
   `back-end/dist`.
-- `npm run validate` runs the native-binding, lint, type, API test, build, and deployment-output gates.
+- `npm run validate` runs the native-binding, lint, type, application/artifact test, build, deployment-output and standalone-install gates.
+- On Linux ARM64, run `npm run test:promotion` and `npm run package:runtime -- <empty .ai-work/runs directory>` for a release. Follow `deploy/README.md` for protected helpers, exact unpacked-artifact acceptance and browser checks.
 
 ## Coding Style & Naming Conventions
 

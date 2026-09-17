@@ -17,6 +17,7 @@ const frontendPackage = JSON.parse(readFileSync(frontendPackagePath, 'utf8'))
 const siteName = 'Jacob Anderson Chess'
 const frontendKind = 'nuxt'
 const frontendPort = Number(process.env.A11Y_FRONTEND_PORT || 3356)
+const externalServer = process.argv.includes('--external-server')
 const apiPort = Number(process.env.A11Y_API_PORT || 3056)
 const baseUrl = `http://127.0.0.1:${frontendPort}`
 const apiUrl = `http://127.0.0.1:${apiPort}/api`
@@ -578,12 +579,85 @@ async function runComputerOpponentSmoke(browser) {
   }
 }
 
-const apiServer = createMockApiServer()
-const frontendProcess = startFrontend()
+async function runWorkerRecoverySmoke(browser) {
+  for (const failure of ['constructor', 'postMessage', 'deadline']) {
+    const page = await browser.newPage()
+    const errors = []
+    page.on('pageerror', error => errors.push(error.message))
+    try {
+      await page.evaluateOnNewDocument((mode) => {
+        const OriginalWorker = window.Worker
+        const tracked = new WeakSet()
+        const fixture = { enabled: true, created: 0, terminated: 0 }
+        window.__chessWorkerFixture = fixture
+        window.Worker = class extends OriginalWorker {
+          constructor(url, options) {
+            const chess = String(url).includes('chess-bot')
+            if (chess && fixture.enabled && mode === 'constructor')
+              throw new Error('Synthetic unavailable worker')
+            super(url, options)
+            if (chess) {
+              tracked.add(this)
+              fixture.created += 1
+            }
+          }
+
+          postMessage(...args) {
+            if (tracked.has(this) && fixture.enabled) {
+              if (mode === 'postMessage')
+                throw new Error('Synthetic worker message failure')
+              if (mode === 'deadline')
+                return
+            }
+            super.postMessage(...args)
+          }
+
+          terminate() {
+            if (tracked.has(this)) {
+              fixture.terminated += 1
+              tracked.delete(this)
+            }
+            super.terminate()
+          }
+        }
+      }, failure)
+      await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded', timeout: 30_000 })
+      await page.waitForNetworkIdle({ idleTime: 500, timeout: 8_000 }).catch(() => {})
+      await waitForGameState(page, { boardBusy: 'false', history: '0 plies', heading: 'Your turn' }, 'Initial recovery fixture')
+      await page.click('[data-square="e2"]')
+      await page.waitForFunction(() => document.querySelector('[data-square="e2"]')?.getAttribute('aria-label')?.includes('selected'))
+      await page.click('[data-square="e4"]')
+      await page.waitForFunction(() => document.body.textContent.includes('The computer could not calculate a move.'), { timeout: 20_000 })
+      await waitForGameState(page, { boardBusy: 'false', history: '1 ply' }, `Worker ${failure} clears busy state`)
+      const fixture = await page.evaluate(() => ({ ...window.__chessWorkerFixture }))
+      if (fixture.created !== fixture.terminated)
+        throw new Error(`Worker ${failure} retained a worker: ${JSON.stringify(fixture)}`)
+      await page.click('.game-actions .secondary-action')
+      await waitForGameState(page, { boardBusy: 'false', history: '0 plies', heading: 'Your turn' }, `Undo after worker ${failure}`)
+      await page.evaluate(() => {
+        window.__chessWorkerFixture.enabled = false
+      })
+      await page.click('[data-square="e2"]')
+      await page.waitForFunction(() => document.querySelector('[data-square="e2"]')?.getAttribute('aria-label')?.includes('selected'))
+      await page.click('[data-square="e4"]')
+      await waitForGameState(page, { boardBusy: 'false', history: '2 plies', heading: 'Your turn' }, `Real worker recovers after ${failure}`, 30_000)
+      if (errors.length)
+        throw new Error(`Uncaught worker recovery error: ${errors.join('; ')}`)
+      console.log(`worker recovery ok: ${failure}, terminated, Undo, real bot reply`)
+    }
+    finally {
+      await page.close()
+    }
+  }
+}
+
+const apiServer = externalServer ? undefined : createMockApiServer()
+const frontendProcess = externalServer ? undefined : startFrontend()
 let browser
 
 try {
-  await listen(apiServer, apiPort)
+  if (apiServer)
+    await listen(apiServer, apiPort)
   await waitForHttp(baseUrl)
 
   browser = await puppeteer.launch({
@@ -617,6 +691,7 @@ try {
   let computerOpponentFailure
   try {
     await runComputerOpponentSmoke(browser)
+    await runWorkerRecoverySmoke(browser)
   }
   catch (error) {
     computerOpponentFailure = error
@@ -651,6 +726,8 @@ try {
 finally {
   if (browser)
     await browser.close()
-  await stopProcessTree(frontendProcess)
-  await closeServer(apiServer)
+  if (frontendProcess)
+    await stopProcessTree(frontendProcess)
+  if (apiServer)
+    await closeServer(apiServer)
 }

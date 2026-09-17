@@ -40,7 +40,9 @@ jobs:
           npm --version
 
       - name: Install locked dependencies
-        run: npm ci --include=optional --strict-allow-scripts
+        run: |
+          printf '/.ai-work/\n' >> "$(git rev-parse --git-path info/exclude)"
+          npm ci --include=optional --strict-allow-scripts
 
       - name: Audit development and production dependencies
         run: |
