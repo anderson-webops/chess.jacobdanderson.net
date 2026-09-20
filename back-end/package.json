@@ -1,6 +1,6 @@
 {
 	"name": "back-end",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"private": true,
 	"description": "Hardened Express health API for Jacob Anderson Chess.",
 	"type": "module",

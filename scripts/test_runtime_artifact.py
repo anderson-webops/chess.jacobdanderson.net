@@ -87,6 +87,15 @@ class RuntimeArtifactTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "static deployment identity"):
             artifact.validate(self.root, self.manifest())
 
+    def test_malformed_identity_cannot_be_rehashed(self):
+        for marker in [{}, {"release": "v1.0.0", "commitSha": "a" * 40},
+                       {"release": "v1.0.0", "commitSha": "a" * 40, "deployedAt": "2026-02-30T00:00:00Z"}]:
+            with self.subTest(marker=marker):
+                for name in ["front-end/.output/public/release.json", ".chess-release-prepared.json"]:
+                    (self.root / name).write_text(json.dumps(marker))
+                with self.assertRaisesRegex(ValueError, "invalid deployment identity"):
+                    artifact.validate(self.root, self.manifest())
+
     def test_unlisted_native_and_development_packages_are_rejected(self):
         native = self.root / "back-end/dist/unreviewed.node"
         native.write_text("synthetic native fixture")

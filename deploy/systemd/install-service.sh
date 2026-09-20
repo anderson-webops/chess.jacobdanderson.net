@@ -42,9 +42,27 @@ if ! getent group chess-site >/dev/null; then groupadd --system chess-site; fi
 if ! id chess-site >/dev/null 2>&1; then
   useradd --system --gid chess-site --home-dir "$base" --shell /usr/sbin/nologin chess-site
 fi
-install -d -o root -g chess-site -m 0750 "$base" "$base/releases"
-for directory in "$base/builds" "$base/shared" "$base/shared/npm-cache"; do
-  if [[ ! -e "$directory" ]]; then install -d -o chess-site -g chess-site -m 0700 "$directory"; fi
+service_uid="$(id -u chess-site)"
+service_gid="$(id -g chess-site)"
+ensure_directory() {
+  local path="$1" owner="$2" group="$3" mode="$4"
+  if [[ ! -e "$path" ]]; then
+    install -d -o "$owner" -g "$group" -m "$mode" "$path"
+    return
+  fi
+  if [[ -L "$path" || ! -d "$path" ]]; then
+    echo "Expected a real runtime directory: $path" >&2; exit 1
+  fi
+  if [[ "$(stat -c '%u:%g:%a' "$path")" != "$owner:$group:$mode" ]]; then
+    echo "Existing runtime directory metadata needs operator review; left unchanged: $path" >&2; exit 1
+  fi
+}
+ensure_directory "$base" 0 "$service_gid" 750
+ensure_directory "$base/releases" 0 "$service_gid" 750
+# Only create immediate children of the protected parent. The unprivileged
+# preparation step creates its cache; root never follows paths inside shared/.
+for directory in "$base/builds" "$base/shared"; do
+  ensure_directory "$directory" "$service_uid" "$service_gid" 700
 done
 mkdir -p -- "$helper_parent"
 /usr/bin/python3 -I "$script_dir/trusted-paths.py" "$helper_parent"

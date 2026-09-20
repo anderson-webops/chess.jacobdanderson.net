@@ -49,6 +49,7 @@ assert(!frontendIndex.includes('/api/pageview'), 'Generated HTML must not refere
 assert(!apiApp.includes('startedAt') && !apiApp.includes('pageview'), 'Compiled API must not expose process timing or page-view state')
 assert(!apiApp.includes('sourceMappingURL') && !apiServer.includes('sourceMappingURL'), 'Production API output must not expose source maps')
 assert(/^User=chess-site$/m.test(directService), 'Direct API service must use its unprivileged account')
+assert(/^ExecStart=\/opt\/node-24\.18\.1\/bin\/node /m.test(directService), 'Direct API must select the approved runtime without replacing the host-wide binary')
 assert(/^Environment=HOST=127\.0\.0\.1$/m.test(directService), 'Direct API service must bind only to loopback')
 assert(/^NoNewPrivileges=true$/m.test(directService), 'Direct API service must deny privilege escalation')
 assert(/^ProtectSystem=strict$/m.test(directService), 'Direct API service must have a read-only system view')

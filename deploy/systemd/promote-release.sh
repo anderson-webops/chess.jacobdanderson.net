@@ -21,6 +21,7 @@ if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
 	exit 1
 fi
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+helper_root="$(cd -- "$script_dir/../.." && pwd -P)"
 node_bin_dir="${NODE_BIN_DIR:-/opt/node-24.18.1/bin}"
 node="$node_bin_dir/node"
 archive="$2"
@@ -33,7 +34,7 @@ fi
 # build-owned checkout in the first place, since such a file can replace its guard.
 /usr/bin/python3 -I "$script_dir/trusted-paths.py" \
   "$script_dir/promote-release.sh" "$script_dir/trusted-paths.py" \
-  "$script_dir/../../scripts/runtime-artifact.py" "$script_dir/../runtime-artifact.json" \
+  "$helper_root/scripts/runtime-artifact.py" "$helper_root/deploy/runtime-artifact.json" \
   "$node" "$archive" "$release_root" "$(dirname -- "$current_link")" --tree "$1"
 if [[ ! -x "$node" || "$("$node" --version)" != v24.18.1 ]]; then
   echo 'NODE_BIN_DIR must select the approved Node24.18.1 runtime.' >&2; exit 1
@@ -42,6 +43,20 @@ if [[ -z "$public_host" || ! "$public_host" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z
 	echo "PUBLIC_HOST must be the certificate-covered production hostname." >&2
 	exit 1
 fi
+
+# Select readiness on the same service, preserving its configured port and prefix.
+# shellcheck disable=SC2016 # JavaScript template syntax belongs to the Node subprocess.
+readiness_url="$("$node" -e '
+const health = new URL(process.argv[1])
+const configured = process.argv[2]
+const match = health.pathname.match(/^(.*)\/healthz?\/?$/)
+if (!configured && !match) throw new Error("Set READINESS_URL for a custom health path")
+const ready = new URL(configured || `${match[1]}/readyz`, health)
+if (!["http:", "https:"].includes(health.protocol) || ready.origin !== health.origin
+    || health.username || health.password || ready.username || ready.password
+    || health.hash || ready.hash) throw new Error("Health and readiness must use the same service without credentials or fragments")
+process.stdout.write(ready.href)
+' "$health_url" "${READINESS_URL:-}")"
 
 public_origin="${PUBLIC_ORIGIN:-https://$public_host}"
 resolve_ipv4="${CHESS_RESOLVE_IPV4:-$public_host:443:127.0.0.1}"
@@ -68,7 +83,7 @@ for required_path in \
 		exit 1
 	fi
 done
-/usr/bin/python3 -I "$script_dir/../../scripts/runtime-artifact.py" verify "$candidate" \
+/usr/bin/python3 -I "$helper_root/scripts/runtime-artifact.py" verify "$candidate" \
   --archive "$archive" --sha256 "$archive_sha" --commit "$commit"
 if [[ -e "$current_link" && ! -L "$current_link" ]]; then
 	echo "Refusing to replace non-symlink deployment path: $current_link" >&2
@@ -98,6 +113,9 @@ if [[ -L "$current_link" ]]; then
 		"$release_root_real/"*) ;;
 		*) echo "Existing deployment target is outside $release_root_real: $previous_target" >&2; exit 1 ;;
 	esac
+	if [[ "$previous_target" == "$release_root_real" ]]; then
+    echo 'The release parent cannot be a rollback target.' >&2; exit 1
+  fi
 	/usr/bin/python3 -I "$script_dir/trusted-paths.py" --tree "$previous_target"
   if [[ ! -f "$previous_target/.chess-release-prepared.json" ]]; then
 		echo "Existing direct release is missing its rollback identity." >&2
@@ -159,6 +177,14 @@ identity_matches() {
 const fs = require("node:fs")
 const expected = JSON.parse(fs.readFileSync(process.argv[1], "utf8"))
 const actual = JSON.parse(fs.readFileSync(process.argv[2], "utf8"))
+const valid = value => value && !Array.isArray(value)
+  && Object.keys(value).sort().join(",") === "commitSha,deployedAt,release"
+  && /^v\d+\.\d+\.\d+$/.test(value.release)
+  && /^[0-9a-f]{40}$/.test(value.commitSha)
+  && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value.deployedAt)
+  && Number.isFinite(Date.parse(value.deployedAt))
+  && new Date(value.deployedAt).toISOString().slice(0, 19) === value.deployedAt.slice(0, 19)
+if (!valid(expected) || !valid(actual)) process.exit(1)
 if (expected.release !== actual.release || expected.commitSha !== actual.commitSha || expected.deployedAt !== actual.deployedAt) process.exit(1)
 ' "$expected" "$actual"
 }
@@ -220,10 +246,10 @@ wait_for_target() {
 }
 
 readiness_matches() {
-  # Retained v1.0.1 releases predate readiness; do not invent a migration gate.
+  # Releases without an artifact manifest predate readiness; preserve that legacy gate.
   if [[ ! -f "$1/runtime-manifest.json" ]]; then return 0; fi
   curl --noproxy '*' --fail --silent --show-error --max-time 5 \
-    http://127.0.0.1:3006/readyz --output "$response_health" \
+    "$readiness_url" --output "$response_health" \
     && health_is_minimal "$response_health"
 }
 
@@ -244,6 +270,9 @@ rollback() {
   return "$failed"
 }
 
+if [[ -n "$previous_target" ]] && ! identity_matches "$previous_target/.chess-release-prepared.json" "$previous_target/.chess-release-prepared.json"; then
+  echo 'The retained release has invalid rollback identity.' >&2; exit 1
+fi
 mutation_started=true
 activate_target "$candidate"
 if systemctl restart "$service_name" \

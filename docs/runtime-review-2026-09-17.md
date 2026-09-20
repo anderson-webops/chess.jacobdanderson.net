@@ -73,3 +73,31 @@ The independent baseline and parent source analysis completed; a separate
 architecture worker was stopped without a result. The sealed pre-fix report is
 retained in the local security workbench. This document records the source
 correction and its practical limits; it is not an exhaustive security guarantee.
+
+## v1.0.3 protected-promotion follow-up, 2026-09-20
+
+Shared-template review found that v1.0.2 still normalized administrative path
+operands before validating them. A symlink followed by `..` could therefore make
+the runtime actually executed differ from the executable whose ancestors passed
+the root-owned-path check. It also fixed readiness to `127.0.0.1:3006` even when
+the operator selected another reviewed service through `HEALTH_URL`. Finally, the
+installer created `shared/npm-cache` as root after only checking the protected
+parents, which could follow a replaced nested symlink, and it silently normalized
+some existing directory metadata.
+
+The v1.0.3 source rejects nonabsolute and dot-component administrative paths
+before resolution, derives readiness from the selected health origin or an
+explicit same-origin override, never descends into the unprivileged shared tree as
+root, and leaves unexpected existing ownership or modes unchanged for operator
+review. Rollback targets must be below but not equal to the release root, have a
+protected tree and carry a well-formed exact release identity. Artifact validation
+likewise rejects malformed identities even if an attacker rehashes candidate data.
+
+The dependency locks resolve `devalue` 5.9.4 and current compatible stable
+dependencies. Major and prerelease transitions remain separate compatibility
+decisions. The expanded promotion suite covers 29 cases, including ambiguous
+runtime paths, custom ports and probes, wrong-service readiness, mutable archive,
+contract and rollback trees, malformed public or retained identity, and a release
+parent posing as rollback. The disposable-VM bootstrap regression verifies the
+real installer boundary. These are source and release checks only; production
+activation remains a separate reviewed operator action.

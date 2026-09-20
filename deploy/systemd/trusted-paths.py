@@ -7,7 +7,13 @@ import stat
 
 
 def protected(path, tree=False):
-    path = Path(os.path.abspath(path))
+    raw = os.fspath(path)
+    # Reject ambiguous representations before resolving anything. Otherwise a
+    # symlink followed by ".." can select a different executable than the one
+    # whose ancestors were validated.
+    if not os.path.isabs(raw) or any(part in (".", "..") for part in raw.split(os.sep)):
+        raise ValueError(f"Administrative input must be absolute without dot components: {raw}")
+    path = Path(raw)
     for item in [path, *path.parents]:
         mode = item.lstat()
         if stat.S_ISLNK(mode.st_mode) or mode.st_uid != 0 or mode.st_mode & 0o022:

@@ -22,6 +22,10 @@ installer places versioned helpers under
 `/usr/local/libexec/chess-release/<version>/` and refuses to overwrite a version.
 It checks ownership and modes, keeps the active-pointer parent and release root
 root-controlled, and uses a separate `builds/` directory for unprivileged work.
+Existing directories with different ownership or modes are left unchanged and
+rejected for operator review. The installer creates only the immediate `builds/`
+and `shared/` directories; the unprivileged preparation step creates its npm
+cache, so root never follows or changes a nested cache symlink.
 
 Use the approved Node `24.18.1` binary, normally
 `/opt/node-24.18.1/bin/node`, and npm `12.0.2` for builds. `NODE_BIN_DIR` may select a
@@ -73,6 +77,10 @@ IPv6 with certificate verification. It repeats after copying the tree and tests
 a deliberately missing runtime module. Promotion fault tests run the actual
 administrative helper with synthetic root and fake external services; they do
 not touch a host service, provider or real configuration.
+The additional `scripts/test-bootstrap-in-vm.py --disposable-vm` regression is
+restricted to a fresh, explicitly marked disposable Linux VM. It checks real
+installer permissions, immutable helpers, preserved units and directory metadata,
+a hostile cache symlink and a mutable adjacent unit without starting the service.
 
 For browser acceptance, verify and unpack the same archive, start
 `node scripts/preview-artifact.mjs <unpacked-tree>` on its local test port, and run
@@ -113,8 +121,15 @@ These are root administrative operations, not a request for broad sudo rights.
 Promotion takes an exclusive lock, atomically selects the release, restarts only
 the Chess API, reloads Nginx and verifies exact release identity, headers, denied
 mutations and unknown API routes through both local IPv4 and IPv6 TLS. New
-artifacts must also pass backend readiness. An old retained v1.0.1 rollback uses
-its existing health contract.
+artifacts must also pass backend readiness. Releases without an artifact manifest
+retain their existing health-only rollback contract.
+
+Administrative path operands must be absolute and contain no `.` or `..`
+components. The guard rejects ambiguous symlink-plus-parent representations before
+the selected runtime can execute. `HEALTH_URL` selects the reviewed service;
+readiness uses the same origin, port and path prefix with `/readyz`. A custom
+health path requires an explicit `READINESS_URL` on that same origin. This keeps
+another loopback service from accepting or blocking Chess promotion or rollback.
 
 Any unsuccessful exit after mutation, including HUP/INT/TERM, restores the prior
 pointer and checks the prior service. First-deployment failure removes only the

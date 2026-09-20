@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build/verify a strictly inventoried production tree; never archive runtime state."""
 import argparse
+import datetime
 import fnmatch
 import hashlib
 import json
@@ -109,6 +110,14 @@ def validate(root, manifest):
         raise ValueError("manifest and lock disagree")
     metadata = json.loads((root / "front-end/.output/public/release.json").read_text())
     marker = json.loads((root / ".chess-release-prepared.json").read_text())
+    if (not isinstance(metadata, dict) or set(metadata) != {"release", "commitSha", "deployedAt"}
+            or not isinstance(metadata.get("deployedAt"), str)
+            or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z", metadata["deployedAt"])):
+        raise ValueError("invalid deployment identity")
+    try:
+        datetime.datetime.fromisoformat(metadata["deployedAt"].replace("Z", "+00:00"))
+    except ValueError as error:
+        raise ValueError("invalid deployment identity timestamp") from error
     if metadata != marker or metadata.get("commitSha") != manifest["commit"] or metadata.get("release") != "v" + package["version"]:
         raise ValueError("static deployment identity mismatch")
     visited = runtime_dependencies(root)

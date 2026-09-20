@@ -1,7 +1,7 @@
 {
 	"name": "chess-jacobdanderson-net",
 	"type": "module",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"private": true,
 	"packageManager": "npm@12.0.2",
 	"engines": {
@@ -67,7 +67,6 @@
 	},
 	"allowScripts": {
 		"simple-git-hooks": false,
-		"esbuild@0.28.1": true,
 		"esbuild@0.28.2": true,
 		"fsevents@2.3.3": true,
 		"unrs-resolver@1.12.2": true
@@ -76,8 +75,9 @@
 		"pre-commit": "npm run lint"
 	},
 	"overrides": {
+		"devalue": "5.9.4",
 		"glob": "13.0.6",
-		"esbuild": "^0.28.1",
+		"esbuild": "^0.28.2",
 		"js-yaml": "4.3.2",
 		"launch-editor": {
 			".": "2.14.1",
@@ -89,7 +89,7 @@
 		},
 		"vite": {
 			".": "^8.1.0",
-			"esbuild": "^0.28.1"
+			"esbuild": "^0.28.2"
 		},
 		"nitropack": "2.13.4",
 		"simple-git": "3.36.0",
