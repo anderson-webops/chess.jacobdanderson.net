@@ -24,21 +24,21 @@
     "vue": "^3.5.42"
   },
   "devDependencies": {
-    "@iconify-json/carbon": "^1.2.26",
-    "@nuxt/devtools": "^3.4.2",
+    "@iconify-json/carbon": "^1.2.28",
+    "@nuxt/devtools": "^3.4.3",
     "@nuxt/eslint": "^1.17.0",
     "@nuxtjs/color-mode": "^4.0.1",
-    "@types/node": "^24.13.3",
-    "@unocss/eslint-config": "^66.8.1",
-    "@unocss/nuxt": "^66.8.1",
-    "@vue/compiler-sfc": "^3.5.42",
+    "@types/node": "^24.19.2",
+    "@unocss/eslint-config": "^66.11.0",
+    "@unocss/nuxt": "^66.11.0",
+    "@vue/compiler-sfc": "^3.5.44",
     "c12": "^3.3.4",
-    "nuxt": "^4.5.2",
+    "nuxt": "^4.6.1",
     "nuxt-security": "^2.6.0",
-    "unocss": "^66.8.1",
-    "vitest": "^4.1.11",
-    "vue-router": "^5.3.0",
-    "vue-tsc": "^3.3.11"
+    "unocss": "^66.11.0",
+    "vitest": "^5.0.5",
+    "vue-router": "^5.4.0",
+    "vue-tsc": "^3.3.13"
   },
   "browserslist": [
     "> 1%",
