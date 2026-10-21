@@ -120,22 +120,6 @@ const canHumanMove = computed(() => {
 })
 const canUndo = computed(() => history.value.length > 0)
 
-const turnOwner = computed(() => {
-  trackGameRevision()
-  if (opponentMode.value === 'local')
-    return game.turn() === 'w' ? 'White player' : 'Black player'
-  return game.turn() === humanColor.value ? 'Your turn' : 'Computer turn'
-})
-
-const panelHeading = computed(() => {
-  trackGameRevision()
-  if (game.isGameOver())
-    return 'Game complete'
-  if (isBotThinking.value)
-    return 'Considering the position'
-  return turnOwner.value
-})
-
 const promotionOptions: Array<{ label: string, piece: PieceSymbol }> = [
   { label: 'Queen', piece: 'q' },
   { label: 'Rook', piece: 'r' },
@@ -395,18 +379,9 @@ onBeforeUnmount(cancelBotMove)
 </script>
 
 <template>
-  <section id="game" class="game-shell" aria-labelledby="game-heading">
+  <section id="game" class="game-shell" aria-label="Chess game">
     <div class="game-toolbar">
-      <div>
-        <p class="section-kicker">
-          New game
-        </p>
-        <h2 id="game-heading">
-          Choose how to play
-        </h2>
-      </div>
-
-      <div class="setup-controls" aria-label="Game setup">
+      <div class="setup-controls" role="group" aria-label="Game setup">
         <label>
           Opponent
           <select id="opponent-mode" v-model="opponentMode" @change="startNewGame">
@@ -520,20 +495,13 @@ onBeforeUnmount(cancelBotMove)
         </div>
 
         <div v-else class="headless-console">
-          <div class="terminal-heading">
-            <span class="terminal-lights" aria-hidden="true"><i /><i /><i /></span>
-            <span>notation session</span>
-          </div>
-
           <div class="terminal-body">
-            <p><span aria-hidden="true">&gt;</span> {{ status }}</p>
+            <h2 class="turn-label">
+              {{ isBotThinking ? 'Computer thinking…' : status }}
+            </h2>
             <p v-if="lastMove">
               <span aria-hidden="true">&gt;</span> Last move: <strong>{{ lastMove.san }}</strong> ({{ moveToUci(lastMove) }})
             </p>
-            <p v-if="isBotThinking">
-              <span aria-hidden="true">&gt;</span> Computer search in progress…
-            </p>
-
             <form class="notation-form" @submit.prevent="submitNotationMove">
               <label for="notation-move">Enter a move</label>
               <div class="notation-input-row">
@@ -583,19 +551,10 @@ onBeforeUnmount(cancelBotMove)
         </div>
       </div>
 
-      <aside class="game-panel" aria-label="Game status and history">
-        <div>
-          <p class="turn-label">
-            {{ isBotThinking ? 'Computer thinking' : status }}
-          </p>
-          <h3>{{ panelHeading }}</h3>
-          <p v-if="opponentMode === 'computer'">
-            You are {{ humanColor === 'w' ? 'White' : 'Black' }}. The computer uses deterministic alpha-beta search, with every move verified by the same rules engine as yours.
-          </p>
-          <p v-else>
-            Pass the device after each move. White and Black share the same board or notation session.
-          </p>
-        </div>
+      <aside class="game-panel" aria-label="Game controls and history">
+        <h2 v-if="viewMode === 'board'" class="turn-label">
+          {{ isBotThinking ? 'Computer thinking…' : status }}
+        </h2>
 
         <div class="game-actions" aria-label="Game actions">
           <button class="primary-action" type="button" @click="startNewGame">
@@ -611,7 +570,7 @@ onBeforeUnmount(cancelBotMove)
 
         <div class="history-block">
           <div class="history-heading">
-            <h4>Moves</h4>
+            <h3>Moves</h3>
             <span>{{ history.length }} {{ history.length === 1 ? 'ply' : 'plies' }}</span>
           </div>
           <ol v-if="moveRows.length" class="move-history" aria-label="Move history">
@@ -621,9 +580,6 @@ onBeforeUnmount(cancelBotMove)
               <span>{{ row.black?.san ?? '…' }}</span>
             </li>
           </ol>
-          <p v-else class="empty-history">
-            Your moves will appear here.
-          </p>
         </div>
       </aside>
     </div>
