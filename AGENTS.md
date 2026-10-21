@@ -49,8 +49,8 @@
 
 ## Agent Delivery Workflow
 
-- Do not leave completed work uncommitted. After each coherent, validated change set, create a commit and push it in
-  the same session.
+- Commit small, coherent, validated increments frequently as work becomes reviewable. Push completed work through
+  the authorized repository workflow before ending an implementation turn; preserve unrelated work and all checks.
 - Keep `package-lock.json` synchronized with dependency changes before every commit or push.
 - Keep `back-end/package-lock.json` synchronized with backend manifest changes; it is the production-only direct API
   lock, while the root lock remains authoritative for workspace development and Netlify.
@@ -86,7 +86,9 @@ Never commit or push dependency/package changes if root `npm ci` fails.
 ## Direct Delivery and Pull Requests
 
 - After a coherent change set passes the repository's required checks, default to committing it and pushing it directly to the repository's default branch. Do not open a pull request unless the user explicitly asks for one, branch protection requires it, or an external-contribution policy makes direct integration inappropriate.
-- For a release-worthy application change, update the project version as required, create an annotated tag, and publish or update the corresponding GitHub release in the same work session. Keep documentation-only, formatting-only, and other non-deployable housekeeping changes as committed and pushed source changes without inventing an application release.
+- Group related deployable work into meaningful milestones with aligned versions, new immutable annotated tags, and matching verified GitHub releases. Content, copy, and UI fixes count as deployable changes. Do not tag each intermediate commit.
+- Complete each deployable turn or coherent collection by publishing the release and accepted artifacts consumed by protected deployment, then verify publicly served identity and affected behavior read-only or report the exact blocker. A commit, push, or tag alone does not finish delivery when the release triggers deployment.
+- Keep documentation-only, formatting-only, and other non-deployable housekeeping changes committed and pushed without inventing an application release. Preserve artifact, validation, and host acceptance gates.
 - Never force-push a shared branch or move an existing published tag unless the user explicitly authorizes that exact history rewrite.
 - If automation or repository policy creates a pull request, review it, wait for required checks, merge it when safe, and remove the merged branch before wrapping up. Do not leave redundant pull requests or branches open.
-- Treat commit, push, tag, and GitHub release publication as source delivery only. Do not claim or perform production deployment unless it was separately authorized and verified.
+- Publishing a validated release requests protected deployment; report source publication and verified public activation separately. Source agents never administer production, change infrastructure, or bypass host acceptance gates.
