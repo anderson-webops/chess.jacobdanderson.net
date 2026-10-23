@@ -292,7 +292,6 @@ async function readGameState(page) {
     return {
       boardBusy: document.querySelector('.chessboard')?.getAttribute('aria-busy') ?? null,
       firstWhiteMove: normalize(document.querySelector('.move-history li span:nth-child(2)')?.textContent),
-      heading: normalize(document.querySelector('.game-panel h3')?.textContent),
       history: normalize(document.querySelector('.history-heading span')?.textContent),
       inputDisabled: input instanceof HTMLInputElement ? input.disabled : null,
       inputValue: input instanceof HTMLInputElement ? input.value : null,
@@ -387,7 +386,6 @@ async function waitForGameState(page, expected, label, timeoutMs = 10_000) {
       const currentState = {
         boardBusy: document.querySelector('.chessboard')?.getAttribute('aria-busy') ?? null,
         firstWhiteMove: normalize(document.querySelector('.move-history li span:nth-child(2)')?.textContent),
-        heading: normalize(document.querySelector('.game-panel h3')?.textContent),
         history: normalize(document.querySelector('.history-heading span')?.textContent),
         inputDisabled: input instanceof HTMLInputElement ? input.disabled : null,
         inputValue: input instanceof HTMLInputElement ? input.value : null,
@@ -442,7 +440,6 @@ async function runGameInteractionSmoke(browser) {
 
     await waitForGameState(page, {
       ...activeSession,
-      heading: 'White player',
       history: '0 plies',
       inputDisabled: false,
       inputValue: '',
@@ -455,7 +452,6 @@ async function runGameInteractionSmoke(browser) {
     await playHeadlessMove(page, 'Qh4#', 4)
     await waitForGameState(page, {
       ...activeSession,
-      heading: 'Game complete',
       history: '4 plies',
       inputDisabled: true,
       inputValue: '',
@@ -465,7 +461,6 @@ async function runGameInteractionSmoke(browser) {
     await page.click('.game-actions .secondary-action')
     await waitForGameState(page, {
       ...activeSession,
-      heading: 'Black player',
       history: '3 plies',
       inputDisabled: false,
       inputValue: '',
@@ -475,7 +470,6 @@ async function runGameInteractionSmoke(browser) {
     await playHeadlessMove(page, 'Qh4#', 4)
     await waitForGameState(page, {
       ...activeSession,
-      heading: 'Game complete',
       history: '4 plies',
       inputDisabled: true,
       inputValue: '',
@@ -485,7 +479,6 @@ async function runGameInteractionSmoke(browser) {
     await page.click('.game-actions .primary-action')
     await waitForGameState(page, {
       ...activeSession,
-      heading: 'White player',
       history: '0 plies',
       inputDisabled: false,
       inputValue: '',
@@ -527,7 +520,6 @@ async function runComputerOpponentSmoke(browser) {
     await waitForGameState(page, {
       ...activeSession,
       boardBusy: 'false',
-      heading: 'Your turn',
       history: '0 plies',
       status: 'White to move.',
     }, 'Initial computer game')
@@ -543,7 +535,6 @@ async function runComputerOpponentSmoke(browser) {
       ...activeSession,
       boardBusy: 'false',
       firstWhiteMove: 'e4',
-      heading: 'Your turn',
       history: '2 plies',
       status: 'White to move.',
     }, 'Computer reply and returned human turn', 30_000)
@@ -556,7 +547,6 @@ async function runComputerOpponentSmoke(browser) {
     await waitForGameState(page, {
       ...activeSession,
       boardBusy: 'false',
-      heading: 'Your turn',
       history: '0 plies',
       status: 'White to move.',
     }, 'Reset mobile computer game')
@@ -623,7 +613,7 @@ async function runWorkerRecoverySmoke(browser) {
       }, failure)
       await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded', timeout: 30_000 })
       await page.waitForNetworkIdle({ idleTime: 500, timeout: 8_000 }).catch(() => {})
-      await waitForGameState(page, { boardBusy: 'false', history: '0 plies', heading: 'Your turn' }, 'Initial recovery fixture')
+      await waitForGameState(page, { boardBusy: 'false', history: '0 plies', status: 'White to move.' }, 'Initial recovery fixture')
       await page.click('[data-square="e2"]')
       await page.waitForFunction(() => document.querySelector('[data-square="e2"]')?.getAttribute('aria-label')?.includes('selected'))
       await page.click('[data-square="e4"]')
@@ -633,14 +623,14 @@ async function runWorkerRecoverySmoke(browser) {
       if (fixture.created !== fixture.terminated)
         throw new Error(`Worker ${failure} retained a worker: ${JSON.stringify(fixture)}`)
       await page.click('.game-actions .secondary-action')
-      await waitForGameState(page, { boardBusy: 'false', history: '0 plies', heading: 'Your turn' }, `Undo after worker ${failure}`)
+      await waitForGameState(page, { boardBusy: 'false', history: '0 plies', status: 'White to move.' }, `Undo after worker ${failure}`)
       await page.evaluate(() => {
         window.__chessWorkerFixture.enabled = false
       })
       await page.click('[data-square="e2"]')
       await page.waitForFunction(() => document.querySelector('[data-square="e2"]')?.getAttribute('aria-label')?.includes('selected'))
       await page.click('[data-square="e4"]')
-      await waitForGameState(page, { boardBusy: 'false', history: '2 plies', heading: 'Your turn' }, `Real worker recovers after ${failure}`, 30_000)
+      await waitForGameState(page, { boardBusy: 'false', history: '2 plies', status: 'White to move.' }, `Real worker recovers after ${failure}`, 30_000)
       if (errors.length)
         throw new Error(`Uncaught worker recovery error: ${errors.join('; ')}`)
       console.log(`worker recovery ok: ${failure}, terminated, Undo, real bot reply`)

@@ -9,13 +9,7 @@ definePageMeta({
     <a class="skip-link" href="#game">Skip to the game</a>
     <header class="site-header">
       <div>
-        <p class="eyebrow">
-          Jacob Anderson Chess
-        </p>
-        <h1>Chess, your way.</h1>
-        <p class="lede">
-          Use the board or play entirely in notation. Share the device with a friend or challenge the computer.
-        </p>
+        <h1>Jacob Anderson Chess</h1>
       </div>
       <DarkToggle />
     </header>
