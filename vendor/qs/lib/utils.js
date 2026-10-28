@@ -300,38 +300,100 @@ var isIntrinsicArrayMethod = function isIntrinsicArrayMethod(method, expected) {
     }
 };
 
-// an object with no callable toString (eg, from JSON, or null-prototype) would make String() or join() throw,
-// so it becomes its primitive valueOf or else Object.prototype.toString; arrays are walked like join walks them,
-// copied only once an element changes, with an array already being joined becoming '' as engines do for cycles
+var propertyDescriptor = function propertyDescriptor(value, key) {
+    var current = value;
+    while (current) {
+        var descriptor = Object.getOwnPropertyDescriptor(current, key);
+        if (descriptor) {
+            return descriptor;
+        }
+        current = Object.getPrototypeOf(current);
+    }
+};
+
+var needsCoercion = function needsCoercion(value, visiting) {
+    if (!value || (typeof value !== 'object' && typeof value !== 'function')) {
+        return false;
+    }
+    var primitive = hasToPrimitive && propertyDescriptor(value, Symbol.toPrimitive);
+    if (primitive && (!has.call(primitive, 'value') || primitive.value != null)) {
+        return false;
+    }
+    var stringify = propertyDescriptor(value, 'toString');
+    if (!stringify || (has.call(stringify, 'value') && typeof stringify.value !== 'function')) {
+        return true;
+    }
+    var join = isArray(value) && propertyDescriptor(value, 'join');
+    if (!join || !isIntrinsicArrayMethod(stringify.value, arrayToString) || !isIntrinsicArrayMethod(join.value, arrayJoin)) {
+        return false;
+    }
+    var ancestors = visiting || getSideChannel();
+    if (ancestors.has(value)) {
+        return false;
+    }
+    ancestors.set(value, true);
+    try {
+        var length = Object.getOwnPropertyDescriptor(value, 'length').value;
+        var current = value;
+        while (current) {
+            var keys = Object.getOwnPropertyNames(current);
+            for (var index = 0; index < keys.length; index += 1) {
+                var key = keys[index];
+                var numeric = +key;
+                if (String(numeric) === key && numeric >= 0 && numeric < length && Math.floor(numeric) === numeric) {
+                    var item = propertyDescriptor(value, key);
+                    if (has.call(item, 'value') && needsCoercion(item.value, ancestors)) {
+                        return true;
+                    }
+                }
+            }
+            current = Object.getPrototypeOf(current);
+        }
+        return false;
+    } finally {
+        ancestors['delete'](value);
+    }
+};
+
+var joinCoercible = function joinCoercible(value, joining) {
+    var ancestors = joining || getSideChannel();
+    if (ancestors.has(value)) {
+        return '';
+    }
+    if (!needsCoercion(value)) {
+        return arrayJoin.call(value, ',');
+    }
+    ancestors.set(value, true);
+    try {
+        var length = Math.min(Math.max(Math.floor(+value.length) || 0, 0), 0x1FFFFFFFFFFFFF);
+        var result = '';
+        for (var index = 0; index < length; index += 1) {
+            if (index > 0) {
+                result += ',';
+            }
+            var item = value[index];
+            if (item != null) {
+                result += arrayJoin.call([toCoercible(item, ancestors)], '');
+            }
+        }
+        return result;
+    } finally {
+        ancestors['delete'](value);
+    }
+};
+
 var toCoercible = function toCoercible(value, joining) {
     if (!value || (typeof value !== 'object' && typeof value !== 'function')) {
+        return value;
+    }
+    if (!needsCoercion(value)) {
         return value;
     }
     if (hasToPrimitive && value[Symbol.toPrimitive] != null) {
         return value;
     }
     if (isArray(value) && isIntrinsicArrayMethod(value.toString, arrayToString) && isIntrinsicArrayMethod(value.join, arrayJoin)) {
-        var ancestors = joining || getSideChannel();
-        if (ancestors.has(value)) {
-            return '';
-        }
-        ancestors.set(value, true);
-        var copy;
-        for (var i = 0; i < value.length; i += 1) {
-            var item = value[i];
-            var coerced = toCoercible(item, ancestors);
-            if (!copy && coerced !== item) {
-                copy = [];
-                for (var j = 0; j < i; j += 1) {
-                    copy[j] = value[j];
-                }
-            }
-            if (copy) {
-                copy[i] = coerced;
-            }
-        }
-        ancestors['delete'](value);
-        return copy || value;
+        return joinCoercible(value, joining);
     }
     if (typeof value.toString === 'function') {
         return value;
@@ -526,6 +588,7 @@ module.exports = {
     isBuffer: isBuffer,
     isOverflow: isOverflow,
     isRegExp: isRegExp,
+    joinCoercible: joinCoercible,
     markOverflow: markOverflow,
     maybeMap: maybeMap,
     merge: merge,

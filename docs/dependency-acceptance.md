@@ -1,11 +1,18 @@
 # Dependency acceptance
 
-The private qs 6.17.1-webops.1 patch is based on current upstream 6.17.0.
+The private qs 6.17.2-webops.1 patch is based on current upstream 6.17.0.
 It retains that release's input-copy prototype protection and fixes native
 comma-array coercion across realms. The source, license and compatibility
 boundary are in `vendor/qs/UPSTREAM.md`. The installed CommonJS files and all
 three browser interfaces pass the same security and ordinary-input fixtures.
 The locked build reproduces both the browser distribution and local npm archive.
+
+Intrinsic-array coercion reads each index once and converts it before reading
+the next index. This prevents changing getters from bypassing normalization and
+preserves conversion-driven mutations, fixed initial lengths, sparse separators,
+cycles, repeated aliases, custom hooks and original exceptions. The regressions
+cover both comma serialization and custom encoders delegating to the default
+encoder, across the installed CommonJS and three browser distributions.
 
 Packing normalizes only its disposable public-library copy to 0644 files and
 0755 directories, so private source checkouts keep their original permissions

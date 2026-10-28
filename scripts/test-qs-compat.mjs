@@ -11,6 +11,7 @@ const variants = [
     name: 'commonjs',
     library: backendRequire('qs'),
     input: text => JSON.parse(text),
+    evaluate: expression => vm.runInThisContext(expression),
     prototype: Object.prototype,
   },
 ]
@@ -37,11 +38,12 @@ for (const mode of ['module', 'global', 'amd']) {
         ? context.result
         : context.Qs,
     input: text => vm.runInContext(`JSON.parse(${JSON.stringify(text)})`, context),
+    evaluate: expression => vm.runInContext(expression, context),
     prototype: vm.runInContext('Object.prototype', context),
   })
 }
 
-for (const { name, library, input, prototype } of variants) {
+for (const { name, library, input, evaluate, prototype } of variants) {
   test(`${name}: nested object copies retain safe prototypes and caller data`, () => {
     const original = input('{"filter":{"__proto__":{"injected":true},"label":"kept"},"items":[{"__proto__":{"injected":true},"label":"item"}]}')
     const before = JSON.stringify(original)
@@ -97,6 +99,202 @@ for (const { name, library, input, prototype } of variants) {
     }, { arrayFormat: 'comma' }), 'items=%5Bobject%20Array%5D')
   })
 
+  test(`${name}: comma coercion observes each index getter only once`, () => {
+    for (const construct of [
+      evaluate,
+      expression => vm.runInNewContext(expression),
+    ]) {
+      for (const options of [
+        { encodeValuesOnly: false },
+        { encodeValuesOnly: true },
+        { encode: false },
+      ]) {
+        for (const changing of [false, true]) {
+          const nested = construct(`(() => {
+            let reads = 0;
+            return Object.defineProperty([], 0, {
+              get() { return ++reads === 1 || !${changing} ? reads : { toString: 'blocked' }; }
+            });
+          })()`)
+          assert.equal(library.stringify({
+            items: [nested],
+          }, { arrayFormat: 'comma', ...options }), 'items=1')
+        }
+        const prefix = construct(`(() => {
+          let reads = 0;
+          const value = [0, { toString: 'blocked' }];
+          return Object.defineProperty(value, 0, { get() { return ++reads; } });
+        })()`)
+        const query = library.stringify({
+          items: [prefix],
+        }, { arrayFormat: 'comma', ...options })
+        assert.equal(decodeURIComponent(query), 'items=1,[object Object]')
+      }
+    }
+  })
+
+  test(`${name}: delegated default encoding observes each array index once`, () => {
+    for (const construct of [
+      evaluate,
+      expression => vm.runInNewContext(expression),
+    ]) {
+      const nested = construct(`(() => {
+        let reads = 0;
+        return Object.defineProperty([], 0, { get() { return ++reads; } });
+      })()`)
+      const query = library.stringify({ items: 'delegated' }, {
+        encoder(value, defaultEncoder, charset, kind, format) {
+          return defaultEncoder(kind === 'value'
+            ? nested
+            : value, defaultEncoder, charset, kind, format)
+        },
+      })
+      assert.equal(query, 'items=1')
+    }
+  })
+
+  test(`${name}: element conversion precedes the next index read`, () => {
+    for (const construct of [
+      evaluate,
+      expression => vm.runInNewContext(expression),
+    ]) {
+      for (const encodeValuesOnly of [false, true]) {
+        const nested = construct(`(() => {
+          const value = [{ toString() { value[1] = 'changed'; return 'first'; } }, { toString: 'blocked' }];
+          return value;
+        })()`)
+        assert.equal(decodeURIComponent(library.stringify({
+          items: [nested],
+        }, { arrayFormat: 'comma', encodeValuesOnly })), 'items=first,changed')
+      }
+    }
+  })
+
+  test(`${name}: native array length is captured before index getters or conversion`, () => {
+    const cases = [
+      { expression: `(() => { const value = [0, 'tail', 'last']; Object.defineProperty(value, 0, { get() { value.length = 1; return 'first'; } }); return value; })()`, expected: 'first,,' },
+      { expression: `(() => { const value = [0]; Object.defineProperty(value, 0, { get() { value.push('tail'); return 'first'; } }); return value; })()`, expected: 'first' },
+      { expression: `(() => { const value = [{ toString() { value.length = 1; return 'first'; } }, { toString: 'blocked' }, 'last']; return value; })()`, expected: 'first,,' },
+      { expression: `(() => { const value = [{ toString() { value.push('tail'); return 'first'; } }, { toString: 'blocked' }]; return value; })()`, expected: 'first,[object Object]' },
+      { expression: `new Proxy(['first', 'tail'], { get(target, key, receiver) { return key === 'length' ? 1.9 : Reflect.get(target, key, receiver); } })`, expected: 'first' },
+    ]
+    for (const construct of [
+      evaluate,
+      expression => vm.runInNewContext(expression),
+    ]) {
+      for (const encodeValuesOnly of [false, true]) {
+        for (const { expression, expected } of cases) {
+          const nested = construct(expression)
+          assert.equal(decodeURIComponent(library.stringify({
+            items: [nested],
+          }, { arrayFormat: 'comma', encodeValuesOnly })), `items=${expected}`)
+        }
+      }
+    }
+  })
+
+  test(`${name}: sparse indices, cycles and repeated aliases retain join semantics`, () => {
+    const cases = [
+      { expression: `(() => { const value = ['first', , null, undefined, 'last']; const parent = Object.create(Array.prototype); parent[1] = 'inherited'; Object.setPrototypeOf(value, parent); return [value]; })()`, expected: 'first,inherited,,,last' },
+      { expression: `(() => { const value = ['first']; value.push(value, 'last'); return [value]; })()`, expected: 'first,,last' },
+      { expression: `(() => { const first = ['first']; const second = ['second', first]; first.push(second, 'last'); return [first]; })()`, expected: 'first,second,,last' },
+      { expression: `(() => { let reads = 0; const value = Object.defineProperty([], 0, { get() { return ++reads; } }); return [value, value]; })()`, expected: '1,2' },
+    ]
+    for (const construct of [
+      evaluate,
+      expression => vm.runInNewContext(expression),
+    ]) {
+      for (const encodeValuesOnly of [false, true]) {
+        for (const { expression, expected } of cases) {
+          assert.equal(decodeURIComponent(library.stringify({
+            items: construct(expression),
+          }, { arrayFormat: 'comma', encodeValuesOnly })), `items=${expected}`)
+        }
+      }
+    }
+  })
+
+  test(`${name}: conversion hints, Symbols and original exception identities remain intact`, () => {
+    for (const encodeValuesOnly of [false, true]) {
+      for (const expression of ['[Symbol("nested")]', '[{ [Symbol.toPrimitive]() { return Symbol("nested"); } }]']) {
+        assert.throws(() => library.stringify({
+          items: [
+            evaluate(expression),
+          ],
+        }, { arrayFormat: 'comma', encodeValuesOnly }), { name: 'TypeError' })
+      }
+      let calls = 0
+      const nested = [
+        {
+          [Symbol.toPrimitive](hint) {
+            calls += 1
+            assert.equal(hint, 'string')
+            assert.equal(this, nested[0])
+            return 'custom'
+          },
+        },
+      ]
+      assert.equal(library.stringify({
+        items: [nested],
+      }, { arrayFormat: 'comma', encodeValuesOnly }), 'items=custom')
+      assert.equal(calls, 1)
+      const sentinel = new Error('intentional conversion failure')
+      for (const value of [
+        [
+          {
+            toString() { throw sentinel },
+          },
+        ],
+        Object.defineProperty([], 0, {
+          get() { throw sentinel },
+        }),
+      ]) {
+        assert.throws(() => library.stringify({
+          items: [value],
+        }, { arrayFormat: 'comma', encodeValuesOnly }), error => error === sentinel)
+      }
+    }
+  })
+
+  test(`${name}: reentrant native joins retain cycle suppression and a single indexed read`, () => {
+    for (const construct of [
+      evaluate,
+      expression => vm.runInNewContext(expression),
+    ]) {
+      for (const encodeValuesOnly of [false, true]) {
+        for (const blockSecondRead of [false, true]) {
+          const expression = `(() => {
+            let reads = 0;
+            const value = ['', 'tail'];
+            Object.defineProperty(value, 0, {
+              get() {
+                reads += 1;
+                return ${blockSecondRead} && reads > 1
+                  ? { toString: 'blocked' }
+                  : { toString() { return value.join(','); } };
+              }
+            });
+            return value;
+          })()`
+          const nested = construct(expression)
+          const query = library.stringify({
+            items: [nested],
+          }, { arrayFormat: 'comma', encodeValuesOnly })
+          assert.equal(decodeURIComponent(query), 'items=,tail')
+          const delegated = construct(expression)
+          const encoded = library.stringify({ items: 'delegated' }, {
+            encoder(value, defaultEncoder, charset, kind, format) {
+              return defaultEncoder(kind === 'value'
+                ? delegated
+                : value, defaultEncoder, charset, kind, format)
+            },
+          })
+          assert.equal(decodeURIComponent(encoded), 'items=,tail')
+        }
+      }
+    }
+  })
+
   test(`${name}: ordinary parsing, formats and limits remain intact`, () => {
     assert.equal(JSON.stringify(library.parse('tag=one&tag=two')), '{"tag":["one","two"]}')
     assert.equal(JSON.stringify(library.parse('filter[0]=one&filter[1]=two')), '{"filter":["one","two"]}')
@@ -112,6 +310,20 @@ for (const { name, library, input, prototype } of variants) {
     }), { name: 'RangeError' })
   })
 }
+
+test('browser coercion retains single index observations without Symbol support', () => {
+  const context = vm.createContext({ Symbol: undefined })
+  vm.runInContext(browser, context)
+  const nested = vm.runInContext(`(() => {
+    let reads = 0;
+    return Object.defineProperty([], 0, {
+      get() { return ++reads === 1 ? 1 : { toString: 'blocked' }; }
+    });
+  })()`, context)
+  assert.equal(context.Qs.stringify({
+    items: [nested],
+  }, { arrayFormat: 'comma' }), 'items=1')
+})
 
 test('the installed qs runtime is byte-bound to the reviewed source', async () => {
   for (const relative of [

@@ -153,7 +153,7 @@ var stringify = function stringify(
                 return v == null ? v : encoder(v, defaults.encoder, charset, 'value', format);
             });
         }
-        objKeys = [{ value: obj.length > 0 ? utils.toCoercible(obj).join(',') || null : void undefined }];
+        objKeys = [{ value: obj.length > 0 ? utils.joinCoercible(obj) || null : void undefined }];
     } else if (isArray(filter)) {
         objKeys = filter;
     } else {
