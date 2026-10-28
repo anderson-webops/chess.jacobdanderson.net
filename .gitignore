@@ -2,6 +2,7 @@
 **/node_modules
 **/dist
 !/vendor/listhen/dist/
+!/vendor/deepmerge/dist/
 **/.output
 **/.nuxt
 **/*.tsbuildinfo

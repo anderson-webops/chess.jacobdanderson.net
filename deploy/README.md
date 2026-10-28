@@ -27,8 +27,8 @@ Existing directories with different ownership or modes are likewise left
 unchanged and rejected rather than silently normalized.
 The installer does not start or restart a service.
 
-Use Node 24.18.1 from the approved protected location, normally
-`/opt/node-24.18.1/bin`, and npm 12.0.2 for builds. `NODE_BIN_DIR` can select an
+Use Node 24.22.1 from the approved protected location, normally
+`/opt/node-24.22.1/bin`, and npm 12.2.1 for builds. `NODE_BIN_DIR` can select an
 approved alternative for the helpers; an alternate service ExecStart needs its
 own review. Do not replace the host-wide `/usr/bin/node`. Existing installations
 created with build-owned deployment parents require a separate ownership and
@@ -41,7 +41,7 @@ As the unprivileged build account, use a clean checkout beneath `builds/`, its
 annotated version tag and the exact fetched canonical `origin/main`. Run:
 
 ```bash
-NODE_BIN_DIR=/opt/node-24.18.1/bin \
+NODE_BIN_DIR=/opt/node-24.22.1/bin \
   deploy/systemd/prepare-release.sh /srv/vitesse-nuxt-template/builds/<release>
 ```
 
@@ -75,7 +75,7 @@ extracted files, not a build tree changed to root ownership. The promoter verifi
 that protected staged tree against the original protected archive again:
 
 ```bash
-PUBLIC_HOST=site.example NODE_BIN_DIR=/opt/node-24.18.1/bin \
+PUBLIC_HOST=site.example NODE_BIN_DIR=/opt/node-24.22.1/bin \
   /usr/local/libexec/vitesse-release/<version>/deploy/systemd/promote-release.sh \
   /srv/vitesse-nuxt-template/releases/<new-release> \
   <protected-archive> <reviewed-sha256> <reviewed-commit>

@@ -19,14 +19,14 @@ those exact CI bytes before publishing a source release.
 Keep protected configuration and any downstream database, email spool, cache or
 uploads outside immutable releases. Preserve durable state on both promotion and
 rollback. Preserve the exact installed service users, paths and loopback ports;
-the `/srv/vitesse-nuxt-template` and `/opt/node-24.18.1/bin/node` source adapter defaults are
+the `/srv/vitesse-nuxt-template` and `/opt/node-24.22.1/bin/node` source adapter defaults are
 examples for a separately reviewed installation, not instructions to overwrite a
 working host. Never change DNS, IPv4/IPv6, certificates or edge configuration to
 make artifact acceptance pass.
 
 ## Build and accept away from production
 
-Use an unprivileged disposable Linux ARM64 builder with Node 24.18.1, npm 12.0.2,
+Use an unprivileged disposable Linux ARM64 builder with Node 24.22.1, npm 12.2.1,
 Python 3.11 or newer and Bubblewrap with user namespaces available. Start from a
 clean, exact source commit. Record that commit. Run the repository's clean install,
 full/production audits, signatures, lint, types, tests, build, native declarations

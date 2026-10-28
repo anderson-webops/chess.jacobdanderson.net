@@ -22,8 +22,8 @@
   "runtime": {
     "os": "linux",
     "arch": "arm64",
-    "node": "24.18.1",
-    "npmBuildOnly": "12.0.2"
+    "node": "24.22.1",
+    "npmBuildOnly": "12.2.1"
   },
   "deployment": {
     "schemaVersion": 1,
