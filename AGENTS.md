@@ -1,5 +1,36 @@
 # Repository Guidelines
 
+## Standing Dependency Completion Policy
+
+Treat dependency remediation as part of completing authorized work on this
+site, not as an optional follow-up. Proactively resolve vulnerabilities,
+compatibility problems, broken installations and lockfile issues. Cover direct
+and transitive dependencies, production and development dependencies,
+workspaces and root-level tools. Do not dismiss findings because they are
+pre-existing or development-only.
+
+Before creating a release tag or publishing a release, require a clean locked
+installation for every applicable dependency graph, zero known dependency
+vulnerabilities in both full and production audits, and all applicable project
+checks. An unavailable or incomplete audit is not a clean result. Use supported
+upgrades, replacements or maintainable patches that preserve functionality.
+Do not silence findings, weaken checks or force incompatible versions merely
+to obtain a passing result.
+
+Intermediate commits may capture coherent progress. Commit and push validated
+work through this site's authorized delivery process, and complete meaningful
+releases rather than stopping after reporting fixable dependency blockers.
+Documentation-only housekeeping does not require an application release.
+
+Preserve unrelated work, coordinate with other active chats, and retain existing
+security, approval and production-access boundaries. Existing maintenance pauses
+and repository exclusions remain in force; this policy does not expand access
+or authorize otherwise excluded work. If a genuine blocker prevents completion,
+preserve progress and report the exact blocker and remaining work. Distinguish
+a published release from verified live deployment.
+
+Treat this as a standing instruction for this site.
+
 ## Project Structure & Module Organization
 
 - `front-end/` contains the Nuxt 4 application. UI lives in `src/components`, layouts in `src/layouts`, routes in
@@ -67,7 +98,7 @@ Required production/dev dependency update flow before every dependency commit:
 2. Review both `dependencies` and `devDependencies` in the root and every workspace package; do not limit updates to production-only packages.
 3. Apply needed updates with the narrowest command that updates the relevant manifest and lockfile together, such as `npm install -w <workspace> <package>@<version>` or `npm install -D -w <workspace> <package>@<version>`.
 4. If the update is only a lockfile/security refresh, regenerate from the root with `npm install --package-lock-only --ignore-scripts --no-fund --no-audit`.
-5. Run `npm audit` from the repository root and resolve remaining production or dev advisories before committing unless a documented upstream limitation prevents it.
+5. Run `npm audit` from the repository root and resolve all known production and development advisories before creating a release tag or publishing a release. Record genuine upstream blockers and keep the release held until they are resolved.
 
 Required dependency verification before every commit/push:
 1. Run `npm ci` from the repository root.

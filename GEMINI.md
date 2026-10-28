@@ -1,5 +1,14 @@
 # Workspace Instructions
 
+## Standing Dependency Completion Policy
+
+Read and follow the standing dependency completion policy in `AGENTS.md` in
+this directory. It requires complete dependency remediation, clean locked
+installations, zero-vulnerability full and production audits, applicable checks
+before release, and validated source delivery. Existing maintenance pauses,
+exclusions, approvals and production-access boundaries remain in force.
+Published releases and verified live deployments are separate outcomes.
+
 - This repository is the Jacob Anderson Chess site derived from the local Nuxt monorepo template.
 - Keep `origin` pointed at `anderson-webops/chess.jacobdanderson.net`, `template` pointed at
   `anderson-webops/vitesse-nuxt-template`, and `upstream` pointed at `antfu/vitesse-nuxt`.
@@ -24,7 +33,7 @@ Required production/dev dependency update flow before every dependency commit:
 2. Review both `dependencies` and `devDependencies` in the root and every workspace package; do not limit updates to production-only packages.
 3. Apply needed updates with the narrowest command that updates the relevant manifest and lockfile together, such as `npm install -w <workspace> <package>@<version>` or `npm install -D -w <workspace> <package>@<version>`.
 4. If the update is only a lockfile/security refresh, regenerate from the root with `npm install --package-lock-only --ignore-scripts --no-fund --no-audit`.
-5. Run `npm audit` from the repository root and resolve remaining production or dev advisories before committing unless a documented upstream limitation prevents it.
+5. Run `npm audit` from the repository root and resolve all known production and development advisories before creating a release tag or publishing a release. Record genuine upstream blockers and keep the release held until they are resolved.
 
 Required dependency verification before every commit/push:
 1. Run `npm ci` from the repository root.
