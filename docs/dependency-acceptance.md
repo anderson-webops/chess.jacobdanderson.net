@@ -1,5 +1,18 @@
 # Dependency acceptance
 
+The private qs 6.17.1-webops.1 patch is based on current upstream 6.17.0.
+It retains that release's input-copy prototype protection and fixes native
+comma-array coercion across realms. The source, license and compatibility
+boundary are in `vendor/qs/UPSTREAM.md`. The installed CommonJS files and all
+three browser interfaces pass the same security and ordinary-input fixtures.
+The locked build reproduces both the browser distribution and local npm archive.
+
+The local archive is a source installation input. Independent API fixtures and
+the artifact producer supply it during locked installation. The final immutable
+runtime retains the installed library and its verified inventory, rather than
+its package-manager input archive. The existing artifact layout and retained
+release verification remain unchanged.
+
 TypeScript uses the latest maintained 6.x release, 6.0.3. The current
 `vue-tsc@3.3.13` requires `typescript/lib/tsc`, which TypeScript 7.0.2 no longer
 exports; the native compiler therefore fails Nuxt type checking.

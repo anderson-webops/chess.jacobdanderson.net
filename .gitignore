@@ -3,6 +3,7 @@
 **/dist
 !/vendor/listhen/dist/
 !/vendor/deepmerge/dist/
+!/vendor/qs/dist/
 **/.output
 **/.nuxt
 **/*.tsbuildinfo
