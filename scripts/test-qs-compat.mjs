@@ -126,6 +126,6 @@ test('the installed qs runtime is byte-bound to the reviewed source', async () =
     'dist/qs.js.LICENSES.txt',
   ]) {
     const installed = backendRequire.resolve(`qs/${relative}`)
-    assert.deepEqual(await readFile(installed), await readFile(new URL(`../vendor/qs/${relative}`, import.meta.url)))
+    assert.ok((await readFile(installed)).equals(await readFile(new URL(`../vendor/qs/${relative}`, import.meta.url))), `${relative} must match the reviewed source`)
   }
 })

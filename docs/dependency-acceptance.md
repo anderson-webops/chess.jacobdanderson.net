@@ -7,6 +7,12 @@ boundary are in `vendor/qs/UPSTREAM.md`. The installed CommonJS files and all
 three browser interfaces pass the same security and ordinary-input fixtures.
 The locked build reproduces both the browser distribution and local npm archive.
 
+Packing normalizes only its disposable public-library copy to 0644 files and
+0755 directories, so private source checkouts keep their original permissions
+without changing archive bytes. Archive and installed-file comparisons use
+bounded equality checks rather than formatting binary diffs. Regressions cover
+a 0600 checkout, a 0077 builder umask and rejection under a 256 MiB Node heap.
+
 The local archive is a source installation input. Independent API fixtures and
 the artifact producer supply it during locked installation. The final immutable
 runtime retains the installed library and its verified inventory, rather than

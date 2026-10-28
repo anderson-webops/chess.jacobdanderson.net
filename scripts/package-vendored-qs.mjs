@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { chmod, cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -69,6 +69,20 @@ async function bundleLicenses(inputs, directory) {
   return `${[...packages].sort(([left], [right]) => left.localeCompare(right, 'en')).map(([identity, license]) => `${identity}\n${license.trimEnd()}`).join('\n\n')}\n`
 }
 
+async function normalizePackageModes(directory) {
+  await chmod(directory, 0o755)
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const filename = path.join(directory, entry.name)
+    if (entry.isDirectory()) {
+      await normalizePackageModes(filename)
+    }
+    else {
+      assert.ok(entry.isFile(), 'The packaged library must contain only regular files and directories')
+      await chmod(filename, 0o644)
+    }
+  }
+}
+
 const temporary = await mkdtemp(path.join(tmpdir(), 'vitesse-vendored-qs-'))
 try {
   const buildRoot = path.join(temporary, 'build')
@@ -124,6 +138,7 @@ try {
     recursive: true,
     filter: filename => path.basename(filename) !== 'node_modules',
   })
+  await normalizePackageModes(packedSource)
   const result = spawnSync(process.execPath, [
     process.env.npm_execpath,
     'pack',
@@ -141,7 +156,7 @@ try {
   const archive = await readFile(path.join(temporary, archiveName))
   const filename = path.join(destination, archiveName)
   if (check) {
-    assert.deepEqual(await readFile(filename), archive, 'Vendored qs archive must match reviewed source')
+    assert.ok((await readFile(filename)).equals(archive), 'Vendored qs archive must match reviewed source')
   }
   else {
     await mkdir(destination, { recursive: true })

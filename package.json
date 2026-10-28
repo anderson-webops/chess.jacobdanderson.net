@@ -1,7 +1,7 @@
 {
 	"name": "vitesse-nuxt-monorepo",
 	"type": "module",
-	"version": "2.1.7",
+	"version": "2.1.8",
 	"private": true,
 	"packageManager": "npm@12.2.1",
 	"engines": {
@@ -31,7 +31,7 @@
 		"lint": "npm run lint:root && npm run -w front-end lint && npm run -w back-end lint",
 		"lint-fix": "eslint \"*.{js,ts,mjs,cjs}\" scripts netlify --fix && npm run -w front-end lint-fix && npm run -w back-end lint-fix",
 		"typecheck": "npm run -w front-end typecheck && npm run -w back-end typecheck && tsc -p netlify/tsconfig.json --noEmit",
-		"test": "npm run -w back-end test && node --test scripts/test-listhen-compat.mjs scripts/test-braces-compat.mjs scripts/test-deepmerge-compat.mjs scripts/test-qs-compat.mjs && python3 -B -m unittest discover -s scripts -p test_runtime_artifact.py -v",
+		"test": "npm run -w back-end test && node --test scripts/test-listhen-compat.mjs scripts/test-braces-compat.mjs scripts/test-deepmerge-compat.mjs scripts/test-qs-compat.mjs scripts/test-vendored-qs-packaging.mjs && python3 -B -m unittest discover -s scripts -p test_runtime_artifact.py -v",
 		"clean": "node scripts/clean.mjs",
 		"deps:check": "taze",
 		"a11y": "node scripts/a11y-smoke.mjs",
