@@ -1,7 +1,7 @@
 {
 	"name": "vitesse-nuxt-monorepo",
 	"type": "module",
-	"version": "2.1.9",
+	"version": "2.1.10",
 	"private": true,
 	"packageManager": "npm@12.2.1",
 	"engines": {
@@ -31,7 +31,8 @@
 		"lint": "npm run lint:root && npm run -w front-end lint && npm run -w back-end lint",
 		"lint-fix": "eslint \"*.{js,ts,mjs,cjs}\" scripts netlify --fix && npm run -w front-end lint-fix && npm run -w back-end lint-fix",
 		"typecheck": "npm run -w front-end typecheck && npm run -w back-end typecheck && tsc -p netlify/tsconfig.json --noEmit",
-		"test": "npm run -w back-end test && node --test scripts/test-listhen-compat.mjs scripts/test-braces-compat.mjs scripts/test-deepmerge-compat.mjs scripts/test-qs-compat.mjs scripts/test-vendored-qs-packaging.mjs && python3 -B -m unittest discover -s scripts -p test_runtime_artifact.py -v",
+		"test": "npm run -w back-end test && node --test scripts/test-listhen-compat.mjs scripts/test-braces-compat.mjs scripts/test-deepmerge-compat.mjs scripts/test-qs-compat.mjs scripts/test-vendored-qs-packaging.mjs scripts/test-vue-devtools-compat.mjs && npm run test:devtools && python3 -B -m unittest discover -s scripts -p test_runtime_artifact.py -v",
+		"test:devtools": "node scripts/test-vue-devtools-host.mjs",
 		"clean": "node scripts/clean.mjs",
 		"deps:check": "taze",
 		"a11y": "node scripts/a11y-smoke.mjs",
@@ -46,9 +47,12 @@
 		"test:direct-runtime": "node scripts/direct-runtime-smoke.mjs",
 		"test:promotion": "bash scripts/test-promotion-recovery.sh",
 		"package:runtime": "bash scripts/package-runtime.sh",
-		"validate": "npm run check:qs-package && npm run check:native-bindings && npm run lint && npm run typecheck && npm run test && npm run build && npm run check:deploy-output && npm run check:api-install",
+		"validate": "npm run check:qs-package && npm run check:vue-devtools-package && npm run check:dependency-graph && npm run check:native-bindings && npm run lint && npm run typecheck && npm run test && npm run build && npm run check:deploy-output && npm run check:api-install",
 		"package:qs": "node scripts/package-vendored-qs.mjs",
-		"check:qs-package": "node scripts/package-vendored-qs.mjs --check"
+		"check:qs-package": "node scripts/package-vendored-qs.mjs --check",
+		"package:vue-devtools": "node scripts/package-vendored-vue-devtools.mjs",
+		"check:vue-devtools-package": "node scripts/package-vendored-vue-devtools.mjs --check",
+		"check:dependency-graph": "npm ls --all"
 	},
 	"dependencies": {
 		"serverless-http": "^4.0.0"
@@ -72,7 +76,8 @@
 		"qs": "file:back-end/vendor/qs-6.17.2-webops.1.tgz",
 		"simple-git-hooks": "^2.14.0",
 		"taze": "^21.3.0",
-		"typescript": "^6.0.3"
+		"typescript": "^6.0.3",
+		"vite-plugin-vue-devtools": "file:vendor/vite-plugin-vue-devtools-9.0.0-rc.2-webops.1.tgz"
 	},
 	"allowScripts": {
 		"simple-git-hooks": false,
@@ -100,6 +105,7 @@
 		"@nuxt/devtools": {
 			"launch-editor": "2.14.2"
 		},
+		"vite-plugin-vue-devtools@^9.0.0-beta.1": "$vite-plugin-vue-devtools",
 		"vite": {
 			".": "^8.3.5",
 			"esbuild": "^0.28.2"

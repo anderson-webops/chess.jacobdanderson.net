@@ -1,0 +1,1 @@
+const e=`__VUE_DEVTOOLS_VITE_RUNTIME__`,t=`virtual:vue-devtools-client`,n=`\0${t}`,r=`vite-plugin-vue-devtools/client`,i=`vue-devtools`;function a(e){return!e||e===`./`?`/`:e.endsWith(`/`)?e:`${e}/`}function o(e){return`${a(e)}__devtools__/`}function s(e){return`${o(e)}dock-client.js`}export{n as a,i,t as n,o,e as r,s,r as t};

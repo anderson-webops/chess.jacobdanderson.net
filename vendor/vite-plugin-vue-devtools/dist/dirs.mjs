@@ -1,0 +1,1 @@
+import{fileURLToPath as e}from"node:url";const t=e(new URL(`../client`,import.meta.url));export{t as clientDist};

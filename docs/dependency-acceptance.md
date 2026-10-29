@@ -1,5 +1,20 @@
 # Dependency acceptance
 
+Nuxt DevTools 4.0.0 uses Vite DevTools 0.8.0, but its Vue plugin's 9.0.0-rc.2
+distribution still declares only the 0.7.6 peer range. The maintained metadata
+patch in `vendor/vite-plugin-vue-devtools` adds the 0.8 range without changing
+any executable, type, client or license bytes. Its exact registry identity and
+all 38 unchanged-file hashes are recorded alongside the original metadata.
+The archive must reproduce from that source, and the complete installed graph
+must pass `npm ls --all` without an incompatible peer exception.
+
+The real Vite DevTools 0.8 host initializes the unmodified plugin, serves its
+exact UI and dock bytes, and transforms its actual injected HMR client over
+loopback. That integration remains part of `npm test`; full Nuxt types, site
+checks and artifact acceptance remain required. No provider version is forced
+outside its declared range, and neither dependency warnings nor checks are
+suppressed. Replace the patch when upstream supports this peer combination.
+
 The private qs 6.17.2-webops.1 patch is based on current upstream 6.17.0.
 It retains that release's input-copy prototype protection and fixes native
 comma-array coercion across realms. The source, license and compatibility

@@ -1,0 +1,1 @@
+function e(e=21){let t=``,n=e;for(;n--;)t+=`useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict`[Math.random()*64|0];return t}export{e as t};
