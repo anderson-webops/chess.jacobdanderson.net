@@ -42,8 +42,11 @@ python3 -B scripts/runtime-artifact.py pack "$stage" --archive "$archive" --comm
 sha=$(sha256sum "$archive" | cut -d ' ' -f 1)
 printf '%s  %s\n' "$sha" "$(basename "$archive")" > "$output/SHA256SUMS"
 cp "$stage/runtime-manifest.json" "$output/runtime-manifest.json"
-mkdir "$output/unpacked"
-python3 -B scripts/runtime-artifact.py unpack "$output/unpacked" --archive "$archive" --sha256 "$sha" --commit "$commit"
+mkdir -m 700 "$output/unpacked"
+(
+  umask 077
+  python3 -B scripts/runtime-artifact.py unpack "$output/unpacked" --archive "$archive" --sha256 "$sha" --commit "$commit"
+)
 bash scripts/test-unpacked-artifact.sh "$output/unpacked"
 cp -R "$output/unpacked" "$output/copied"
 python3 -B scripts/runtime-artifact.py verify "$output/copied" --archive "$archive" --sha256 "$sha" --commit "$commit"
