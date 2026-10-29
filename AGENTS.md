@@ -50,7 +50,7 @@ Shared Sites policy (`../AGENTS.md` when available) applies. These essentials al
 
 ## Build, Test, and Development Commands
 
-- `npm ci` installs the committed workspace dependency graph. Use Node 24.18.1 and npm 12.0.2 at the repo root; do not mix package managers for normal
+- `npm ci` installs the committed workspace dependency graph. Use Node 24.22.1 and npm 12.2.1 at the repo root; do not mix package managers for normal
   development.
 - `npm run dev` starts the Nuxt front-end on port `3333`.
 - `npm run server` starts the Express API with `tsx watch` on port `3006`.

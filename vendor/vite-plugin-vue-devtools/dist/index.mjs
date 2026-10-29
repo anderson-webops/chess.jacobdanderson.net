@@ -1,0 +1,10 @@
+import{a as e,i as t,n,o as r,s as i,t as a}from"./constants-CGjdG_4e.mjs";import{clientDist as o}from"./dirs.mjs";import{fileURLToPath as s}from"node:url";import{normalizePath as c}from"vite";const l=`/* vue-devtools:client-injection */`;function u(t,r){let i=c(s(import.meta.url)),a=d(t.appendTo);return{name:`vue-devtools:client-injection`,enforce:`pre`,apply:`serve`,async resolveId(t,n){if(t===`virtual:vue-devtools-client`)return e;if(t===`vite-plugin-vue-devtools/client`&&n===e)return await this.resolve(t,i,{skipSelf:!0})},load(t){if(t===e)return p(r)},transform(e,t,r){if(r?.ssr||!a.length)return;let[i]=t.split(`?`,2);if(f(i,a)&&!e.includes(l))return`${l}\nimport '${n}';\n${e}`},transformIndexHtml:{order:`pre`,handler(){if(!a.length)return[{tag:`script`,injectTo:`head-prepend`,attrs:{type:`module`},children:`import ${JSON.stringify(n)}`}]}}}}function d(e){return e?Array.isArray(e)?e:[e]:[]}function f(e,t){return t.some(t=>typeof t==`string`?e.endsWith(t):(t.lastIndex=0,t.test(e)))}function p(e){return`
+import { disposeVueDevTools, installVueDevTools } from '${a}'
+
+installVueDevTools(${JSON.stringify(e)})
+
+if (import.meta.hot) {
+  import.meta.hot.accept()
+  import.meta.hot.dispose(disposeVueDevTools)
+}
+`.trimStart()}function m(){let e=`/`,n=!0,a;return{name:`vue-devtools:dock-registration`,apply:`serve`,configResolved(t){e=t.base,n=!!t.devtools&&t.devtools.config.mcp!==!1,t.devtools||t.logger.warn(`[vite-plugin-vue-devtools] Vue DevTools requires Vite DevTools. Install @vitejs/devtools and set devtools: { apply: 'serve' } in your Vite config.`)},closeBundle(){a?.(),a=void 0},devtools:{async setup(s){if(n){let{registerVueDevtoolsAgentHost:e}=await import(`@vue/devtools-agent/node`);a?.(),a=e(s)}let c=r(e);s.views.hostStatic(c,o),s.docks.register({id:t,title:`Vue DevTools`,category:`framework`,icon:`logos:vue`,type:`iframe`,url:c,frameId:t,clientScript:{importFrom:i(e),...n?{eager:!0}:{}}})}}}}function h(e){return{enabled:e.enabled??!0}}function g(e={}){return e.enabled??!0?[u(e,h(e)),m()]:[]}export{g as default,g as vueDevtools};

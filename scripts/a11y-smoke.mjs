@@ -71,8 +71,12 @@ function emptyCollection() {
 
 function responseFor(url) {
   const pathname = url.pathname.replace(/\/+/g, '/')
-  if (pathname.endsWith('/pageview'))
-    return { pageview: 0, startAt: Date.now() }
+  if (pathname.endsWith('/pageview')) {
+    return {
+      pageview: 0,
+      startAt: Date.now(),
+    }
+  }
   if (pathname.includes('/session'))
     return { authenticated: false, user: null, admin: null }
   if (pathname.includes('/auth') || pathname.includes('/login'))
@@ -85,31 +89,82 @@ function responseFor(url) {
     const start = new Date(Date.now() + 24 * 60 * 60_000)
     start.setMinutes(0, 0, 0)
     const end = new Date(start.getTime() + 60 * 60_000)
-    return [{ id: 'a11y-slot', title: 'Available', start: start.toISOString(), end: end.toISOString() }]
+    return [
+      {
+        id: 'a11y-slot',
+        title: 'Available',
+        start: start.toISOString(),
+        end: end.toISOString(),
+      },
+    ]
   }
-  if (pathname.includes('/topics'))
-    return { topics: [], claims: [], ...emptyCollection() }
-  if (pathname.includes('/claims'))
-    return { claims: [], ...emptyCollection() }
-  if (pathname.includes('/search'))
-    return { query: url.searchParams.get('q') || '', ...emptyCollection() }
+  return collectionResponseFor(pathname, url.searchParams)
+}
+
+function collectionResponseFor(pathname, searchParams) {
+  if (pathname.includes('/topics')) {
+    return {
+      topics: [],
+      claims: [],
+      ...emptyCollection(),
+    }
+  }
+  if (pathname.includes('/claims')) {
+    return {
+      claims: [],
+      ...emptyCollection(),
+    }
+  }
+  if (pathname.includes('/search')) {
+    return {
+      query: searchParams.get('q') || '',
+      ...emptyCollection(),
+    }
+  }
   if (pathname.includes('/submissions') || pathname.includes('/board') || pathname.includes('/items'))
     return emptyCollection()
-  if (pathname.includes('/service-directory'))
-    return { services: [], categories: [], ...emptyCollection() }
-  if (pathname.includes('/elections'))
-    return { elections: [], ...emptyCollection() }
-  if (pathname.includes('/jurisdictions') || pathname.includes('/locations') || pathname.includes('/districts'))
-    return { jurisdictions: [], locations: [], districts: [], ...emptyCollection() }
-  if (pathname.includes('/representatives') || pathname.includes('/candidate'))
-    return { representatives: [], candidates: [], ...emptyCollection() }
-  if (pathname.includes('/sources'))
-    return { sources: [], ...emptyCollection() }
+  if (pathname.includes('/service-directory')) {
+    return {
+      services: [],
+      categories: [],
+      ...emptyCollection(),
+    }
+  }
+  if (pathname.includes('/elections')) {
+    return {
+      elections: [],
+      ...emptyCollection(),
+    }
+  }
+  if (pathname.includes('/jurisdictions') || pathname.includes('/locations') || pathname.includes('/districts')) {
+    return {
+      jurisdictions: [],
+      locations: [],
+      districts: [],
+      ...emptyCollection(),
+    }
+  }
+  if (pathname.includes('/representatives') || pathname.includes('/candidate')) {
+    return {
+      representatives: [],
+      candidates: [],
+      ...emptyCollection(),
+    }
+  }
+  if (pathname.includes('/sources')) {
+    return {
+      sources: [],
+      ...emptyCollection(),
+    }
+  }
   if (pathname.includes('/products'))
     return []
   if (pathname.includes('/contact') || pathname.includes('/cart') || pathname.includes('/orders'))
     return { ok: true }
-  return { ok: true, ...emptyCollection() }
+  return {
+    ok: true,
+    ...emptyCollection(),
+  }
 }
 
 function createMockApiServer() {
@@ -151,8 +206,30 @@ async function waitForHttp(url, timeoutMs = 45_000) {
 function startFrontend() {
   const isNuxt = frontendKind === 'nuxt' || Object.values(frontendPackage.scripts || {}).some(script => String(script).includes('nuxt'))
   const args = isNuxt
-    ? ['exec', '-w', 'front-end', '--', 'nuxt', 'dev', '--host', '127.0.0.1', '--port', String(frontendPort)]
-    : ['exec', '-w', 'front-end', '--', 'vite', '--host', '127.0.0.1', '--port', String(frontendPort), '--strictPort']
+    ? [
+        'exec',
+        '-w',
+        'front-end',
+        '--',
+        'nuxt',
+        'dev',
+        '--host',
+        '127.0.0.1',
+        '--port',
+        String(frontendPort),
+      ]
+    : [
+        'exec',
+        '-w',
+        'front-end',
+        '--',
+        'vite',
+        '--host',
+        '127.0.0.1',
+        '--port',
+        String(frontendPort),
+        '--strictPort',
+      ]
 
   const child = spawn('npm', args, {
     cwd: projectRoot,
@@ -257,7 +334,9 @@ async function analyzePage(browser, route, scheme, gameView) {
   page.setDefaultTimeout(30_000)
   await page.setViewport({ width: 1280, height: 1000, deviceScaleFactor: 1 })
   if (scheme === 'dark' || scheme === 'light') {
-    await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: scheme }])
+    await page.emulateMediaFeatures([
+      { name: 'prefers-color-scheme', value: scheme },
+    ])
   }
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 })
   await page.waitForNetworkIdle({ idleTime: 500, timeout: 8_000 }).catch(() => {})
@@ -293,8 +372,12 @@ async function readGameState(page) {
       boardBusy: document.querySelector('.chessboard')?.getAttribute('aria-busy') ?? null,
       firstWhiteMove: normalize(document.querySelector('.move-history li span:nth-child(2)')?.textContent),
       history: normalize(document.querySelector('.history-heading span')?.textContent),
-      inputDisabled: input instanceof HTMLInputElement ? input.disabled : null,
-      inputValue: input instanceof HTMLInputElement ? input.value : null,
+      inputDisabled: input instanceof HTMLInputElement
+        ? input.disabled
+        : null,
+      inputValue: input instanceof HTMLInputElement
+        ? input.value
+        : null,
       interfaceMode: document.querySelector('#interface-mode')?.value ?? null,
       liveMessage: normalize(document.querySelector('[aria-live="polite"]')?.textContent),
       opponentMode: document.querySelector('#opponent-mode')?.value ?? null,
@@ -310,7 +393,9 @@ async function assertBoardGeometry(page, label, expectedSize) {
       return null
 
     const boardRect = board.getBoundingClientRect()
-    const squares = [...board.querySelectorAll(':scope > .square')].map((square) => {
+    const squares = [
+      ...board.querySelectorAll(':scope > .square'),
+    ].map((square) => {
       const rect = square.getBoundingClientRect()
       return {
         height: rect.height,
@@ -368,11 +453,9 @@ async function assertBoardGeometry(page, label, expectedSize) {
   if (rows.length !== 8 || rows.some(row => row.count !== 8))
     fail(`expected eight rows of eight squares, received ${JSON.stringify(rows)}`)
 
-  if (expectedSize) {
-    if (Math.abs(geometry.board.width - expectedSize.width) > tolerance
-      || Math.abs(geometry.board.height - expectedSize.height) > tolerance) {
-      fail(`board changed size from ${expectedSize.width} x ${expectedSize.height}`)
-    }
+  if (expectedSize && (Math.abs(geometry.board.width - expectedSize.width) > tolerance
+    || Math.abs(geometry.board.height - expectedSize.height) > tolerance)) {
+    fail(`board changed size from ${expectedSize.width} x ${expectedSize.height}`)
   }
 
   return geometry.board
@@ -387,8 +470,12 @@ async function waitForGameState(page, expected, label, timeoutMs = 10_000) {
         boardBusy: document.querySelector('.chessboard')?.getAttribute('aria-busy') ?? null,
         firstWhiteMove: normalize(document.querySelector('.move-history li span:nth-child(2)')?.textContent),
         history: normalize(document.querySelector('.history-heading span')?.textContent),
-        inputDisabled: input instanceof HTMLInputElement ? input.disabled : null,
-        inputValue: input instanceof HTMLInputElement ? input.value : null,
+        inputDisabled: input instanceof HTMLInputElement
+          ? input.disabled
+          : null,
+        inputValue: input instanceof HTMLInputElement
+          ? input.value
+          : null,
         interfaceMode: document.querySelector('#interface-mode')?.value ?? null,
         liveMessage: normalize(document.querySelector('[aria-live="polite"]')?.textContent),
         opponentMode: document.querySelector('#opponent-mode')?.value ?? null,
@@ -413,7 +500,9 @@ async function playHeadlessMove(page, move, expectedPlyCount) {
   await page.type('#notation-move', move)
   const historyUpdated = page.waitForFunction((expectedHistory) => {
     return document.querySelector('.history-heading span')?.textContent?.replace(/\s+/g, ' ').trim() === expectedHistory
-  }, { timeout: 10_000 }, `${expectedPlyCount} ${expectedPlyCount === 1 ? 'ply' : 'plies'}`)
+  }, { timeout: 10_000 }, `${expectedPlyCount} ${expectedPlyCount === 1
+    ? 'ply'
+    : 'plies'}`)
 
   await Promise.all([
     historyUpdated,
@@ -641,8 +730,12 @@ async function runWorkerRecoverySmoke(browser) {
   }
 }
 
-const apiServer = externalServer ? undefined : createMockApiServer()
-const frontendProcess = externalServer ? undefined : startFrontend()
+const apiServer = externalServer
+  ? undefined
+  : createMockApiServer()
+const frontendProcess = externalServer
+  ? undefined
+  : startFrontend()
 let browser
 
 try {

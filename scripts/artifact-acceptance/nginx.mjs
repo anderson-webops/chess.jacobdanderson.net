@@ -57,7 +57,10 @@ http {
 const children = []
 let diagnostics = ''
 function start(command, args, env) {
-  const child = spawn(command, args, { env, stdio: ['ignore', 'pipe', 'pipe'] })
+  const child = spawn(command, args, {
+    env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
   for (const stream of [child.stdout, child.stderr]) {
     stream.on('data', (data) => {
       diagnostics = `${diagnostics}${data}`.slice(-4000)
@@ -67,13 +70,38 @@ function start(command, args, env) {
   return child
 }
 async function request(origin, path, method = 'GET') {
-  const args = ['--noproxy', '*', '--silent', '--show-error', '--max-time', '2', '--cacert', certificate, '--dump-header', `${root}/headers`, '--output', method === 'HEAD' ? '/dev/null' : `${root}/body.txt`, '--write-out', '%{http_code}']
-  args.push(...(method === 'HEAD' ? ['--head'] : ['--request', method]), `${origin}${path}`)
+  const args = [
+    '--noproxy',
+    '*',
+    '--silent',
+    '--show-error',
+    '--max-time',
+    '2',
+    '--cacert',
+    certificate,
+    '--dump-header',
+    `${root}/headers`,
+    '--output',
+    method === 'HEAD'
+      ? '/dev/null'
+      : `${root}/body.txt`,
+    '--write-out',
+    '%{http_code}',
+  ]
+  args.push(...(method === 'HEAD'
+    ? ['--head']
+    : ['--request', method]), `${origin}${path}`)
   const result = spawnSync('/usr/bin/curl', args, { encoding: 'utf8', timeout: 3000, maxBuffer: 8192 })
   assert.equal(result.status, 0, `TLS request failed: ${result.stderr}; ${diagnostics}`)
   const headers = (await readFile(`${root}/headers`, 'utf8')).toLowerCase()
-  const body = method === 'HEAD' ? '' : await readFile(`${root}/body.txt`, 'utf8')
-  return { status: Number(result.stdout), headers, body }
+  const body = method === 'HEAD'
+    ? ''
+    : await readFile(`${root}/body.txt`, 'utf8')
+  return {
+    status: Number(result.stdout),
+    headers,
+    body,
+  }
 }
 async function stop(child, signal) {
   if (child.exitCode !== null || child.signalCode !== null)
@@ -125,7 +153,12 @@ try {
     assert.deepEqual(JSON.parse((await request(origin, '/release.json')).body), metadata)
     assert.equal((await request(origin, worker.replace('front-end/.output/public', ''))).status, 200)
     for (const method of ['GET', 'HEAD']) {
-      for (const path of ['/healthz', '/api/health', '/api/healthz', '/api/readyz']) {
+      for (const path of [
+        '/healthz',
+        '/api/health',
+        '/api/healthz',
+        '/api/readyz',
+      ]) {
         const response = await request(origin, path, method)
         assert.equal(response.status, 200)
         assert.match(response.headers, /cache-control: no-store/)
@@ -163,10 +196,20 @@ try {
   }
   await new Promise(resolve => setTimeout(resolve, 100))
   assert.equal((await request('https://127.0.0.1:18881', '/api/readyz')).status, 200)
-  console.log(JSON.stringify({ nginxArtifact: 'passed', ipv4: true, ipv6: true, tlsVerified: true, staticAndApi: true, retainedConnections, admissionRecovery: true }))
+  console.log(JSON.stringify({
+    nginxArtifact: 'passed',
+    ipv4: true,
+    ipv6: true,
+    tlsVerified: true,
+    staticAndApi: true,
+    retainedConnections,
+    admissionRecovery: true,
+  }))
 }
 finally {
-  const outcomes = await Promise.allSettled(children.map((child, index) => stop(child, index === 1 ? 'SIGQUIT' : 'SIGTERM')))
+  const outcomes = await Promise.allSettled(children.map((child, index) => stop(child, index === 1
+    ? 'SIGQUIT'
+    : 'SIGTERM')))
   for (const result of outcomes) {
     if (result.status === 'rejected') {
       console.error(result.reason)

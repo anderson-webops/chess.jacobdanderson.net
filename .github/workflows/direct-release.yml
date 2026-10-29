@@ -20,13 +20,13 @@ jobs:
           persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.18.1
+          node-version: 24.22.1
           package-manager-cache: false
 
       - name: Pin npm
-        run: npm install --global npm@12.0.2 --allow-scripts=npm
+        run: npm install --global npm@12.2.1 --allow-scripts=npm
 
       - name: Prepare exact tagged direct runtime
         env:
@@ -39,6 +39,42 @@ jobs:
           NPM_CONFIG_CACHE="$RUNNER_TEMP/npm-cache" \
           deploy/systemd/prepare-release.sh "$GITHUB_WORKSPACE"
 
+  installer:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.1
+          package-manager-cache: false
+
+      - name: Stage the protected disposable-host runtime
+        run: |
+          npm install --global npm@12.2.1 --allow-scripts=npm
+          sudo apt-get update -qq
+          sudo apt-get install --yes --no-install-recommends nginx
+          node_prefix="$(dirname "$(dirname "$(command -v node)")")"
+          sudo chown root:root /opt
+          sudo chmod 0755 /opt
+          sudo install -d -o root -g root -m 0755 /opt/node-24.22.1
+          sudo cp -a "$node_prefix/." /opt/node-24.22.1/
+          sudo chown -R root:root /opt/node-24.22.1
+          sudo chmod -R go-w /opt/node-24.22.1
+          printf 'isolated-public-source-fixture\n' | sudo tee /run/chess-source-validation-vm >/dev/null
+          sudo chown root:root /run/chess-source-validation-vm
+          sudo chmod 0600 /run/chess-source-validation-vm
+
+      - name: Test privileged bootstrap and concurrent cache swapping
+        run: sudo python3 -B scripts/test-bootstrap-in-vm.py --disposable-vm
+
   artifact:
     needs: prepare
     runs-on: ubuntu-24.04-arm
@@ -48,13 +84,13 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.18.1
+          node-version: 24.22.1
           package-manager-cache: false
       - name: Prepare isolated artifact-test tools
         run: |
-          npm install --global npm@12.0.2 --allow-scripts=npm
+          npm install --global npm@12.2.1 --allow-scripts=npm
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends bubblewrap apparmor nginx openssl
           if test -d /sys/kernel/security/apparmor; then

@@ -5,7 +5,9 @@ import net from 'node:net'
 import path from 'node:path'
 import process from 'node:process'
 
-const repositoryRoot = process.argv[2] ? path.resolve(process.argv[2]) : path.resolve(import.meta.dirname, '..')
+const repositoryRoot = process.argv[2]
+  ? path.resolve(process.argv[2])
+  : path.resolve(import.meta.dirname, '..')
 
 async function reservePort() {
   const server = net.createServer()
@@ -15,7 +17,9 @@ async function reservePort() {
   })
   const address = server.address()
   assert.ok(address && typeof address === 'object')
-  await new Promise((resolveClose, reject) => server.close(error => error ? reject(error) : resolveClose()))
+  await new Promise((resolveClose, reject) => server.close(error => error
+    ? reject(error)
+    : resolveClose()))
   return address.port
 }
 
@@ -43,7 +47,9 @@ async function waitForExit(child, timeoutMs) {
 async function stopProcessTree(child) {
   if (!child.pid || !isRunning(child))
     return
-  const target = process.platform === 'win32' ? child.pid : -child.pid
+  const target = process.platform === 'win32'
+    ? child.pid
+    : -child.pid
   try {
     process.kill(target, 'SIGTERM')
   }
@@ -65,7 +71,9 @@ async function waitForHealth(baseUrl, child, diagnostics) {
     if (!isRunning(child))
       throw new Error(`Direct API exited before health: ${diagnostics()}`)
     try {
-      const response = await fetch(`${baseUrl}/api/health`, { signal: AbortSignal.timeout(2_000) })
+      const response = await fetch(`${baseUrl}/api/health`, {
+        signal: AbortSignal.timeout(2_000),
+      })
       await response.arrayBuffer()
       if (response.ok)
         return
@@ -104,7 +112,9 @@ for (const stream of [child.stdout, child.stderr]) {
 try {
   await waitForHealth(baseUrl, child, () => diagnosticOutput.trim())
 
-  const health = await fetch(`${baseUrl}/api/health`, { signal: AbortSignal.timeout(5_000) })
+  const health = await fetch(`${baseUrl}/api/health`, {
+    signal: AbortSignal.timeout(5_000),
+  })
   assert.equal(health.status, 200)
   assert.deepEqual(await health.json(), { ok: true })
   assert.equal(health.headers.get('cache-control'), 'no-store')
@@ -121,13 +131,24 @@ try {
   assert.equal(mutation.status, 405)
   assert.deepEqual(await mutation.json(), { error: 'method_not_allowed' })
 
-  const reserved = await fetch(`${baseUrl}/admin`, { signal: AbortSignal.timeout(5_000) })
+  const reserved = await fetch(`${baseUrl}/admin`, {
+    signal: AbortSignal.timeout(5_000),
+  })
   assert.equal(reserved.status, 404)
   assert.deepEqual(await reserved.json(), { error: 'not_found' })
 
-  for (const route of ['/healthz', '/readyz', '/api/healthz', '/api/readyz']) {
+  for (const route of [
+    '/healthz',
+    '/readyz',
+    '/api/healthz',
+    '/api/readyz',
+  ]) {
     for (const method of ['GET', 'HEAD']) {
-      const response = await fetch(`${baseUrl}${route}`, { method, signal: AbortSignal.timeout(2000), redirect: 'manual' })
+      const response = await fetch(`${baseUrl}${route}`, {
+        method,
+        signal: AbortSignal.timeout(2000),
+        redirect: 'manual',
+      })
       assert.equal(response.status, 200)
       assert.equal(response.headers.get('cache-control'), 'no-store')
       assert.equal(response.headers.get('set-cookie'), null)
@@ -161,7 +182,13 @@ try {
     pending.destroy()
   }
 
-  console.log(JSON.stringify({ directRuntime: 'passed', loopback: true, mutations: 'denied', probes: 'GET/HEAD passed', repeatedSignals: 'drained' }))
+  console.log(JSON.stringify({
+    directRuntime: 'passed',
+    loopback: true,
+    mutations: 'denied',
+    probes: 'GET/HEAD passed',
+    repeatedSignals: 'drained',
+  }))
 }
 finally {
   await stopProcessTree(child)

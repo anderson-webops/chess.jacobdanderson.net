@@ -1,17 +1,25 @@
 <script setup lang="ts">
 const color = useColorMode()
-const toggleLabel = computed(() => color.value === 'dark' ? 'Switch to light theme' : 'Switch to dark theme')
+const toggleLabel = computed(() => color.value === 'dark'
+  ? 'Switch to light theme'
+  : 'Switch to dark theme')
 
 useHead({
-  meta: [{
-    id: 'theme-color',
-    name: 'theme-color',
-    content: () => color.value === 'dark' ? '#111813' : '#f3ead7',
-  }],
+  meta: [
+    {
+      id: 'theme-color',
+      name: 'theme-color',
+      content: () => color.value === 'dark'
+        ? '#111813'
+        : '#f3ead7',
+    },
+  ],
 })
 
 function toggleDark() {
-  color.preference = color.value === 'dark' ? 'light' : 'dark'
+  color.preference = color.value === 'dark'
+    ? 'light'
+    : 'dark'
 }
 </script>
 

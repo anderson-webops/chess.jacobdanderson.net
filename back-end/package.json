@@ -1,13 +1,13 @@
 {
 	"name": "back-end",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"private": true,
 	"description": "Hardened Express health API for Jacob Anderson Chess.",
 	"type": "module",
-	"packageManager": "npm@12.0.2",
+	"packageManager": "npm@12.2.1",
 	"engines": {
-		"node": ">=24.18.1 <25",
-		"npm": ">=12.0.2 <13"
+		"node": ">=24.22.1 <25",
+		"npm": ">=12.2.1 <13"
 	},
 	"main": "dist/server.js",
 	"scripts": {
@@ -26,22 +26,24 @@
 	"author": "Jacob Anderson",
 	"license": "MIT",
 	"dependencies": {
-		"dotenv": "^17.4.2",
-		"express": "^5.2.1",
-		"express-rate-limit": "^8.7.0",
-		"helmet": "^8.1.0"
+		"dotenv": "^18.0.9",
+		"express": "^5.3.0",
+		"express-rate-limit": "^8.7.1",
+		"helmet": "^8.3.0",
+		"qs": "file:vendor/qs-6.17.2-webops.1.tgz"
+	},
+	"overrides": {
+		"nanoid@^3": "3.3.18",
+		"qs": "$qs"
 	},
 	"devDependencies": {
 		"@types/express": "^5.0.6",
-		"@types/node": "^24.13.3",
+		"@types/node": "^24.19.2",
 		"@types/supertest": "^7.2.1",
-		"globals": "^17.11.0",
-		"supertest": "^7.2.2",
-		"tsx": "^4.23.13",
-		"typescript-eslint": "^8.68.0",
-		"vitest": "^4.1.11"
-	},
-	"overrides": {
-		"qs": "6.16.0"
+		"globals": "^17.13.0",
+		"supertest": "^7.3.1",
+		"tsx": "^4.23.15",
+		"typescript-eslint": "^8.72.1",
+		"vitest": "^5.0.5"
 	}
 }

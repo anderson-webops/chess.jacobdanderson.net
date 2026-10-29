@@ -42,7 +42,9 @@ for (const [parentKey, parent] of Object.entries(packages)) {
     assert(binding, `Missing Linux ARM64 lock entry for ${packageName}@${version} required by ${parentKey}`)
 
     const [bindingKey, metadata] = binding
-    const expectedLibc = packageName.endsWith('-musl') ? 'musl' : 'glibc'
+    const expectedLibc = packageName.endsWith('-musl')
+      ? 'musl'
+      : 'glibc'
     assert(metadata.os?.includes('linux'), `${bindingKey} must target Linux`)
     assert(metadata.cpu?.includes('arm64'), `${bindingKey} must target arm64`)
     assert(metadata.libc?.includes(expectedLibc), `${bindingKey} must target ${expectedLibc}`)

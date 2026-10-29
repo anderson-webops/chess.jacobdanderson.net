@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import shutil
 import stat
+import stat
 import subprocess
 import sys
 import tarfile
@@ -104,8 +105,23 @@ def setup(root):
     return control,candidate,previous,archive,digest,recovery
 
 
+def protected_runtime_copy(source, destination):
+    shutil.copyfile(source, destination)
+    destination.chmod(0o755)
+    metadata = destination.stat()
+    assert metadata.st_uid == 0 and stat.S_IMODE(metadata.st_mode) == 0o755
+
+
 Path('/fixture/runtime').mkdir(parents=True)
-shutil.copy2('/runtime/node', '/fixture/runtime/node')
+writable_source = Path('/fixture/writable-runtime-source')
+writable_source.write_bytes(b'fixture executable bytes')
+writable_source.chmod(0o775)
+permission_probe = Path('/fixture/protected-runtime-copy')
+protected_runtime_copy(writable_source, permission_probe)
+assert permission_probe.read_bytes() == writable_source.read_bytes()
+writable_source.unlink()
+permission_probe.unlink()
+protected_runtime_copy(Path('/runtime/node'), Path('/fixture/runtime/node'))
 Path('/usr/local/bin').mkdir(parents=True)
 for name in ['curl','systemctl','nginx','sleep']:
     p=Path('/usr/local/bin')/name;p.write_text(STUB);p.chmod(0o755)
@@ -114,11 +130,12 @@ modes=['success','bad-health','ipv6-failure','interrupt','restart-failure','ngin
        'symlink-module','wrong-digest','first-success','first-failure','mutable-archive','mutable-contract',
        'mutable-previous','previous-is-parent','invalid-previous-identity','empty-public-identity',
        'ambiguous-runtime-promoter','ambiguous-runtime-installer','alternate-port','wrong-service-readiness',
-       'mismatched-readiness-origin','custom-probes']
+       'mismatched-readiness-origin','custom-probes','mutable-runtime']
 if len(sys.argv) > 1 and sys.argv[1] != 'all':
     assert sys.argv[1] in modes, 'Unknown isolated regression case'
     modes = [sys.argv[1]]
 for mode in modes:
+    Path('/fixture/runtime/node').chmod(0o755)
     root=Path('/fixture')/mode
     control,candidate,previous,archive,digest,recovery=setup(root)
     if mode.startswith('first-'):(root/'current').unlink()
@@ -131,6 +148,7 @@ for mode in modes:
         p=candidate/'back-end/dist/server.js';p.unlink();p.symlink_to('/etc/passwd')
     if mode=='wrong-digest':digest='0'*64
     if mode=='mutable-archive':archive.chmod(0o666)
+    if mode=='mutable-runtime':Path('/fixture/runtime/node').chmod(0o775)
     if mode=='mutable-contract':(control/'deploy/runtime-artifact.json').chmod(0o666)
     if mode=='mutable-previous':(previous/'back-end/dist/app.js').chmod(0o666)
     if mode=='previous-is-parent':
@@ -148,12 +166,12 @@ for mode in modes:
     sentinel=root/'UNTRUSTED_RUNTIME_EXECUTED'
     if mode.startswith('ambiguous-runtime-'):
         (root/'protected/bin').mkdir(parents=True)
-        shutil.copy2('/runtime/node',root/'protected/bin/node')
+        protected_runtime_copy(Path('/runtime/node'),root/'protected/bin/node')
         (root/'build/subdir').mkdir(parents=True)
         (root/'build/bin').mkdir()
         (root/'protected/link').symlink_to(root/'build/subdir')
         unsafe=root/'build/bin/node'
-        unsafe.write_text('#!/bin/sh\ntouch "'+str(sentinel)+'"\nprintf "v24.18.1\\n"\n')
+        unsafe.write_text('#!/bin/sh\ntouch "'+str(sentinel)+'"\nprintf "v24.22.1\\n"\n')
         unsafe.chmod(0o755)
         (root/'build').chmod(0o777)
         env['NODE_BIN_DIR']=str(root/'protected/link')+'/../bin'

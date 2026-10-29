@@ -26,8 +26,8 @@
   "runtime": {
     "os": "linux",
     "arch": "arm64",
-    "node": "24.18.1",
-    "npmBuildOnly": "12.0.2"
+    "node": "24.22.1",
+    "npmBuildOnly": "12.2.1"
   },
   "modulesOutsideDist": [],
   "generatedClients": [],
@@ -49,5 +49,53 @@
   "topology": "Static Nuxt output with independent compiled Express API; preserve installed paths, users, ports, IPv4/IPv6 and edge policy. This direct-release artifact does not replace the separate Netlify function adapter.",
   "requiredPatterns": [
     "front-end/.output/public/_nuxt/chess-bot.worker-*.js"
-  ]
+  ],
+  "deployment": {
+    "schemaVersion": 1,
+    "applicationId": "chess.jacobdanderson.net",
+    "artifactFormat": "vitesse-direct-runtime-v1",
+    "requiredHostCapabilities": [
+      "artifact-only-promotion-v1",
+      "verified-source-and-payload-v1",
+      "protected-immutable-staging-v1",
+      "retained-artifact-rollback-v1",
+      "version-aware-readiness-v1",
+      "dual-stack-release-identity-v1"
+    ],
+    "probes": {
+      "apiHealth": {
+        "path": "/api/health",
+        "methods": [
+          "GET",
+          "HEAD"
+        ],
+        "success": 200
+      },
+      "apiReadiness": {
+        "path": "/api/readyz",
+        "methods": [
+          "GET",
+          "HEAD"
+        ],
+        "success": 200,
+        "failure": 503
+      },
+      "staticIdentity": {
+        "path": "/release.json",
+        "field": "commitSha",
+        "addressFamilies": [
+          "ipv4",
+          "ipv6"
+        ]
+      }
+    },
+    "migrations": "none",
+    "rollback": "verify-retained-artifact-and-identity",
+    "hostControlled": [
+      "service-user",
+      "listener",
+      "reverse-proxy",
+      "protected-environment"
+    ]
+  }
 }

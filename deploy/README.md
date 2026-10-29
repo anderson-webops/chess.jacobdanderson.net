@@ -27,8 +27,8 @@ rejected for operator review. The installer creates only the immediate `builds/`
 and `shared/` directories; the unprivileged preparation step creates its npm
 cache, so root never follows or changes a nested cache symlink.
 
-Use the approved Node `24.18.1` binary, normally
-`/opt/node-24.18.1/bin/node`, and npm `12.0.2` for builds. `NODE_BIN_DIR` may select a
+Use the approved Node `24.22.1` binary, normally
+`/opt/node-24.22.1/bin/node`, and npm `12.2.1` for builds. `NODE_BIN_DIR` may select a
 reviewed protected runtime location. Do not replace the host-wide `/usr/bin/node`.
 The sample systemd unit uses the `/opt` runtime. The installer preserves an
 existing unit; an alternate installed runtime requires explicit operator review.
@@ -43,7 +43,7 @@ The new promoter fails closed until these administrative inputs are protected.
 ## Build and accept the release
 
 1. Use a clean Linux ARM64 checkout with the committed root and standalone backend
-   locks, Node `24.18.1`, npm `12.0.2`, Python 3, bubblewrap, Nginx, curl and OpenSSL. Install with
+   locks, Node `24.22.1`, npm `12.2.1`, Python 3, bubblewrap, Nginx, curl and OpenSSL. Install with
    `npm ci --include=optional --strict-allow-scripts`. Run full and production
    audits, standalone backend audits, package signatures, lint, types, application
    tests, build, native-binding checks, deployment-output checks and accessibility.
@@ -111,7 +111,7 @@ promoter checks all ancestors and all candidate files, and verifies the complete
 staged tree against the independently supplied archive, hash and commit again.
 
 ```bash
-PUBLIC_HOST=chess.jacobdanderson.net NODE_BIN_DIR=/opt/node-24.18.1/bin \
+PUBLIC_HOST=chess.jacobdanderson.net NODE_BIN_DIR=/opt/node-24.22.1/bin \
   /usr/local/libexec/chess-release/<version>/deploy/systemd/promote-release.sh \
   /srv/chess.jacobdanderson.net/releases/<new-release> \
   <protected-archive> <reviewed-sha256> <reviewed-commit>

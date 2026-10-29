@@ -54,7 +54,9 @@ function trackGameRevision() {
   return revision.value
 }
 
-const botColor = computed<Color>(() => humanColor.value === 'w' ? 'b' : 'w')
+const botColor = computed<Color>(() => humanColor.value === 'w'
+  ? 'b'
+  : 'w')
 
 const history = computed(() => {
   trackGameRevision()
@@ -77,8 +79,13 @@ const lastMove = computed(() => history.value.at(-1) ?? null)
 
 const boardSquares = computed(() => {
   trackGameRevision()
-  const squares = SQUARES.map(square => ({ piece: game.get(square), square }))
-  return orientation.value === 'w' ? squares : squares.reverse()
+  const squares = SQUARES.map(square => ({
+    piece: game.get(square),
+    square,
+  }))
+  return orientation.value === 'w'
+    ? squares
+    : squares.reverse()
 })
 
 const legalTargetSquares = computed(() => {
@@ -91,7 +98,9 @@ const legalTargetSquares = computed(() => {
 
 const legalMoves = computed(() => {
   trackGameRevision()
-  return game.isGameOver() ? [] : game.moves()
+  return game.isGameOver()
+    ? []
+    : game.moves()
 })
 
 const status = computed(() => {
@@ -129,7 +138,14 @@ const promotionOptions: Array<{ label: string, piece: PieceSymbol }> = [
 
 function squareLabel(square: Square) {
   const piece = game.get(square)
-  const parts = [piece ? `${piece.color === 'w' ? 'white' : 'black'} ${pieceNames[piece.type]}` : 'empty', square]
+  const parts = [
+    piece
+      ? `${piece.color === 'w'
+        ? 'white'
+        : 'black'} ${pieceNames[piece.type]}`
+      : 'empty',
+    square,
+  ]
   if (selectedSquare.value === square)
     parts.push('selected')
   if (legalTargetSquares.value.has(square))
@@ -138,11 +154,15 @@ function squareLabel(square: Square) {
 }
 
 function showFileLabel(square: Square) {
-  return orientation.value === 'w' ? square[1] === '1' : square[1] === '8'
+  return orientation.value === 'w'
+    ? square[1] === '1'
+    : square[1] === '8'
 }
 
 function showRankLabel(square: Square) {
-  return orientation.value === 'w' ? square[0] === 'a' : square[0] === 'h'
+  return orientation.value === 'w'
+    ? square[0] === 'a'
+    : square[0] === 'h'
 }
 
 function isLastMoveSquare(square: Square) {
@@ -226,7 +246,11 @@ function queueBotMove() {
       }
       worker.onerror = failBotMove
       worker.onmessageerror = failBotMove
-      worker.postMessage({ fen: game.fen(), id: generation, level: botLevel.value })
+      worker.postMessage({
+        fen: game.fen(),
+        id: generation,
+        level: botLevel.value,
+      })
     }
     catch {
       failBotMove()
@@ -237,7 +261,9 @@ function queueBotMove() {
 function startNewGame() {
   cancelBotMove()
   game.reset()
-  orientation.value = opponentMode.value === 'computer' ? humanColor.value : 'w'
+  orientation.value = opponentMode.value === 'computer'
+    ? humanColor.value
+    : 'w'
   notationInput.value = ''
   refresh(`New game. ${describePosition(game)}`)
   queueBotMove()
@@ -252,7 +278,9 @@ function selectSquare(square: Square) {
   const piece = game.get(square)
   if (!selectedSquare.value) {
     if (!piece || piece.color !== game.turn()) {
-      liveMessage.value = `Choose a ${game.turn() === 'w' ? 'white' : 'black'} piece.`
+      liveMessage.value = `Choose a ${game.turn() === 'w'
+        ? 'white'
+        : 'black'} piece.`
       return
     }
 
@@ -355,8 +383,12 @@ function undoMove() {
 }
 
 function flipBoard() {
-  orientation.value = orientation.value === 'w' ? 'b' : 'w'
-  liveMessage.value = `${orientation.value === 'w' ? 'White' : 'Black'} is now at the bottom of the board.`
+  orientation.value = orientation.value === 'w'
+    ? 'b'
+    : 'w'
+  liveMessage.value = `${orientation.value === 'w'
+    ? 'White'
+    : 'Black'} is now at the bottom of the board.`
 }
 
 function changeView() {

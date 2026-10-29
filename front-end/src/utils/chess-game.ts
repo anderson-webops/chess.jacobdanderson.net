@@ -36,8 +36,22 @@ const levelSettings: Record<BotLevel, SearchSettings> = {
 }
 
 export const pieceGlyphs: Record<Color, Record<PieceSymbol, string>> = {
-  b: { b: '♝', k: '♚', n: '♞', p: '♟', q: '♛', r: '♜' },
-  w: { b: '♗', k: '♔', n: '♘', p: '♙', q: '♕', r: '♖' },
+  b: {
+    b: '♝',
+    k: '♚',
+    n: '♞',
+    p: '♟',
+    q: '♛',
+    r: '♜',
+  },
+  w: {
+    b: '♗',
+    k: '♔',
+    n: '♘',
+    p: '♙',
+    q: '♕',
+    r: '♖',
+  },
 }
 
 export const pieceNames: Record<PieceSymbol, string> = {
@@ -64,10 +78,20 @@ export function moveToUci(move: Pick<Move, 'from' | 'promotion' | 'to'>) {
 function orderedMoves(game: Chess) {
   return game.moves({ verbose: true }).sort((left, right) => {
     const score = (move: Move) => {
-      const capture = move.captured ? pieceValues[move.captured] * 10 - pieceValues[move.piece] : 0
-      const promotion = move.promotion ? pieceValues[move.promotion] * 12 : 0
-      const check = move.san.endsWith('#') ? 100_000 : move.san.endsWith('+') ? 400 : 0
-      const castle = move.isKingsideCastle() || move.isQueensideCastle() ? 80 : 0
+      const capture = move.captured
+        ? pieceValues[move.captured] * 10 - pieceValues[move.piece]
+        : 0
+      const promotion = move.promotion
+        ? pieceValues[move.promotion] * 12
+        : 0
+      const check = move.san.endsWith('#')
+        ? 100_000
+        : move.san.endsWith('+')
+          ? 400
+          : 0
+      const castle = move.isKingsideCastle() || move.isQueensideCastle()
+        ? 80
+        : 0
       return capture + promotion + check + castle
     }
 
@@ -80,7 +104,9 @@ function positionalValue(type: PieceSymbol, color: Color, square: Square) {
   const rank = Number(square[1])
   const distanceFromCenter = Math.abs(file - 3.5) + Math.abs(rank - 4.5)
   const centrality = 7 - distanceFromCenter
-  const advancement = color === 'w' ? rank - 2 : 7 - rank
+  const advancement = color === 'w'
+    ? rank - 2
+    : 7 - rank
 
   switch (type) {
     case 'p':
@@ -94,7 +120,9 @@ function positionalValue(type: PieceSymbol, color: Color, square: Square) {
     case 'q':
       return centrality * 3
     case 'k':
-      return square === 'g1' || square === 'c1' || square === 'g8' || square === 'c8' ? 28 : 0
+      return square === 'g1' || square === 'c1' || square === 'g8' || square === 'c8'
+        ? 28
+        : 0
   }
 }
 
@@ -107,7 +135,9 @@ function evaluateForWhite(game: Chess) {
         continue
 
       const value = pieceValues[piece.type] + positionalValue(piece.type, piece.color, piece.square)
-      score += piece.color === 'w' ? value : -value
+      score += piece.color === 'w'
+        ? value
+        : -value
     }
   }
 
@@ -115,8 +145,12 @@ function evaluateForWhite(game: Chess) {
 }
 
 function staticEvaluation(game: Chess) {
-  const perspective = game.turn() === 'w' ? 1 : -1
-  const checkPenalty = game.isCheck() ? 35 : 0
+  const perspective = game.turn() === 'w'
+    ? 1
+    : -1
+  const checkPenalty = game.isCheck()
+    ? 35
+    : 0
   return perspective * evaluateForWhite(game) - checkPenalty
 }
 
@@ -203,8 +237,12 @@ export function tryPlayerMove(game: Chess, input: string): MoveAttempt {
 
   try {
     const coordinates = coordinateMove(text)
-    if (!coordinates)
-      return { move: game.move(text, { strict: false }), ok: true }
+    if (!coordinates) {
+      return {
+        move: game.move(text, { strict: false }),
+        ok: true,
+      }
+    }
 
     const candidates = game.moves({ square: coordinates.from, verbose: true })
       .filter(move => move.to === coordinates.to)
@@ -225,8 +263,11 @@ export function tryPlayerMove(game: Chess, input: string): MoveAttempt {
 }
 
 export function describePosition(game: Chess) {
-  if (game.isCheckmate())
-    return `${game.turn() === 'w' ? 'Black' : 'White'} wins by checkmate.`
+  if (game.isCheckmate()) {
+    return `${game.turn() === 'w'
+      ? 'Black'
+      : 'White'} wins by checkmate.`
+  }
   if (game.isStalemate())
     return 'Draw by stalemate.'
   if (game.isInsufficientMaterial())
@@ -238,6 +279,10 @@ export function describePosition(game: Chess) {
   if (game.isDraw())
     return 'The game is drawn.'
 
-  const player = game.turn() === 'w' ? 'White' : 'Black'
-  return game.isCheck() ? `${player} to move and is in check.` : `${player} to move.`
+  const player = game.turn() === 'w'
+    ? 'White'
+    : 'Black'
+  return game.isCheck()
+    ? `${player} to move and is in check.`
+    : `${player} to move.`
 }
