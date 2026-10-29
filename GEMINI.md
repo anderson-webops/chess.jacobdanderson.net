@@ -1,3 +1,4 @@
-# Gemini Instructions
+# AI Instructions
 
-Read this repository's `AGENTS.md` in full before any work. It is the canonical source of repository-specific AI instructions. When this checkout is under Sites, follow the parent `AGENTS.md` too.
+Read and follow `AGENTS.md`, the canonical instructions for this repository.
+Shared Sites policy applies when available.
