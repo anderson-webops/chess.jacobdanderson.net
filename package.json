@@ -39,7 +39,7 @@
 		"audit:all": "npm audit --audit-level=low && npm run audit:qs",
 		"audit:qs": "npm audit --prefix vendor/qs --workspaces=false --audit-level=low && npm audit --prefix vendor/qs --workspaces=false --omit=dev --audit-level=low",
 		"audit:prod": "npm audit --omit=dev --audit-level=low",
-		"audit:api": "npm audit --prefix back-end --omit=dev --audit-level=low",
+		"audit:api": "npm audit --prefix back-end --workspaces=false --audit-level=low && npm audit --prefix back-end --omit=dev --workspaces=false --audit-level=low",
 		"check:api-install": "node scripts/check-api-install.mjs",
 		"check:native-bindings": "node scripts/check-native-bindings.mjs",
 		"check:deploy-output": "node scripts/check-deploy-output.mjs",

@@ -56,3 +56,30 @@ jobs:
 
       - name: Run accessibility smoke checks
         run: npm run a11y
+
+  promotion-arm64:
+    name: Validate promotion recovery on Linux ARM64
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+
+      - name: Prepare isolated promotion-test tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install --yes --no-install-recommends bubblewrap apparmor
+          if test -d /sys/kernel/security/apparmor; then
+            printf 'abi <abi/4.0>,\ninclude <tunables/global>\nprofile chess-promotion-tests /usr/bin/bwrap flags=(unconfined) {\n  userns,\n}\n' | sudo tee /etc/apparmor.d/chess-promotion-tests >/dev/null
+            sudo apparmor_parser -r /etc/apparmor.d/chess-promotion-tests
+          fi
+
+      - name: Test privileged promotion and recovery
+        run: bash scripts/test-promotion-recovery.sh
