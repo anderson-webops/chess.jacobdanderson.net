@@ -48,6 +48,31 @@ async function withListener(listen, https, callback) {
   }
 }
 
+test('both entrypoints use their trusted bundled browser helper without shared temporary execution', async () => {
+  await mkdir(scratchRoot, { recursive: true })
+  for (const entrypoint of ['commonjs', 'esm']) {
+    const directory = await mkdtemp(join(scratchRoot, 'listhen-open-'))
+    scratchDirectories.push(directory)
+    const result = spawnSync(process.execPath, [
+      join(projectRoot, 'scripts/fixtures/listhen-browser.mjs'),
+      entrypoint,
+    ], {
+      cwd: projectRoot,
+      env: {
+        PATH: process.env.PATH,
+        TMPDIR: directory,
+        HOME: directory,
+        NODE_ENV: 'test',
+      },
+      encoding: 'utf8',
+      timeout: 20_000,
+    })
+    assert.equal(result.signal, null)
+    assert.equal(result.status, 0, result.stderr)
+    assert.match(result.stdout, /Trusted browser launcher selected/u)
+  }
+})
+
 test('local listhen fork preserves HTTP and certificate modes without node-forge', async () => {
   const esm = await import('listhen')
   const commonjs = require('listhen')

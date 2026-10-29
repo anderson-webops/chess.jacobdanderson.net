@@ -13,7 +13,14 @@ test('every locked braces dependency resolves to the guarded fork', () => {
   for (const [, entry] of entries) {
     assert.equal(entry.resolved, 'vendor/braces')
   }
-  assert.equal(lock.packages['vendor/braces'].version, '3.0.4-webops.1')
+  assert.equal(lock.packages['vendor/braces'].version, '3.0.4-webops.2')
+})
+
+test('shallow alternatives and ranges share a cumulative expansion budget', () => {
+  assert.equal(braces.expand('{a,b}'.repeat(12)).length, 4096)
+  assert.throws(() => braces.expand('{a,b}'.repeat(14)), /cumulative output budget/u)
+  assert.throws(() => braces.expand(`${'{a,b}'.repeat(9)}${'x'.repeat(2100)}`), /cumulative output budget/u)
+  assert.throws(() => braces.expand('{1..50000}', { rangeLimit: false }), /range limit/u)
 })
 
 test('ordinary brace patterns keep their compile, expand, and stringify behavior', () => {

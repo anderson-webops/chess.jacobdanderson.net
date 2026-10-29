@@ -1,6 +1,8 @@
 import copy
 import importlib.util
 import json
+import os
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -147,8 +149,10 @@ class RuntimeArtifactTests(unittest.TestCase):
             output = Path(temporary)
             archive = output / "runtime.tar.gz"
             unpacked = output / "unpacked"
-            unpacked.mkdir()
+            unpacked.mkdir(mode=0o700)
             command = [sys.executable, "-B", str(Path(artifact.__file__))]
+            (self.root / "back-end/dist/server.js").chmod(0o751)
+            (self.root / "package-lock.json").chmod(0o600)
             # Handcrafted synthetic fixture exercises verification on any host;
             # the production pack command itself requires Linux ARM64.
             (self.root / artifact.MANIFEST).write_text(json.dumps(self.manifest()))
@@ -157,7 +161,15 @@ class RuntimeArtifactTests(unittest.TestCase):
                     if path.is_file(): target.add(path, arcname=path.relative_to(self.root).as_posix())
             sha = artifact.digest(archive)
             arguments = ["--archive", str(archive), "--sha256", sha, "--commit", "a" * 40]
-            subprocess.run([*command, "unpack", str(unpacked), *arguments], check=True, capture_output=True)
+            subprocess.run([*command, "unpack", str(unpacked), *arguments], check=True, capture_output=True, umask=0o077)
+            for directory in [unpacked, *(path for path in unpacked.rglob("*") if path.is_dir())]:
+                self.assertEqual(stat.S_IMODE(directory.stat().st_mode), 0o755, str(directory))
+                self.assertEqual(directory.stat().st_uid, os.geteuid())
+            with tarfile.open(archive, "r:gz") as source:
+                for member in source.getmembers():
+                    target = unpacked / member.name
+                    self.assertEqual(stat.S_IMODE(target.stat().st_mode), member.mode & 0o755)
+                    self.assertEqual(target.stat().st_uid, os.geteuid())
             subprocess.run([*command, "verify", str(unpacked), *arguments], check=True, capture_output=True)
             (unpacked / "back-end/dist/boundedRateStore.js").unlink()
             # Rehashing the copier's incomplete tree cannot override the trusted archive.

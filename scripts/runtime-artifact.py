@@ -206,6 +206,10 @@ def main():
         manifest = validate(root, json.loads((root / MANIFEST).read_text()))
         if manifest["commit"] != args.commit:
             raise ValueError("artifact source identity mismatch")
+        for directory in root.rglob("*"):
+            if directory.is_dir():
+                directory.chmod(0o755)
+        root.chmod(0o755)
         print(json.dumps({"unpacked": True, "commit": manifest["commit"], "files": len(manifest["files"])}))
     elif args.operation == "pack":
         if platform.system() != "Linux" or platform.machine() != "aarch64":
