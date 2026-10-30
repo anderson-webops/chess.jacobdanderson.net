@@ -10,7 +10,7 @@ production, and Netlify each route that path to the Express application without 
 
 ## Supported toolchain
 
-- Node.js `24.22.1`
+- Node.js `26.13.0`
 - npm `12.2.1`
 
 Use the repository root for all package operations. The committed npm lockfile includes optional native packages for Linux ARM64 glibc and musl deployments, and npm rejects unreviewed dependency install scripts.

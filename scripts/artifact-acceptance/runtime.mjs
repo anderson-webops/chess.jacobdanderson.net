@@ -6,7 +6,7 @@ import process from 'node:process'
 
 assert.equal(process.platform, 'linux')
 assert.equal(process.arch, 'arm64')
-assert.equal(process.version, 'v24.22.1')
+assert.equal(process.version, 'v26.13.0')
 assert.equal(process.cwd(), '/app')
 for (const absent of [
   '/home/builder',

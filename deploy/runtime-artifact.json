@@ -22,7 +22,7 @@
   "runtime": {
     "os": "linux",
     "arch": "arm64",
-    "node": "24.22.1",
+    "node": "26.13.0",
     "npmBuildOnly": "12.2.1"
   },
   "deployment": {

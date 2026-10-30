@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: 24.22.1
+  NODE_VERSION: 26.13.0
   NPM_VERSION: 12.2.1
   PUPPETEER_SKIP_DOWNLOAD: "true"
 
