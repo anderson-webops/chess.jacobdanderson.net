@@ -32,7 +32,7 @@ Human versus human means same-device pass-and-play. This release does not claim 
 
 ## Local development
 
-Use Node.js `24.22.1` and npm `12.2.1` from the repository root.
+Use Node.js `26.13.0` and npm `12.2.1` from the repository root.
 
 ```bash
 npm ci

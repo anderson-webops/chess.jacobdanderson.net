@@ -1,11 +1,11 @@
 {
 	"name": "chess-jacobdanderson-net",
 	"type": "module",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"private": true,
 	"packageManager": "npm@12.2.1",
 	"engines": {
-		"node": ">=24.22.1 <25",
+		"node": ">=26.13.0 <27",
 		"npm": ">=12.2.1 <13"
 	},
 	"description": "Accessible browser chess with visible and headless play modes",
@@ -61,7 +61,7 @@
 	"devDependencies": {
 		"@antfu/eslint-config": "^10.0.0",
 		"@netlify/functions": "^6.0.3",
-		"@types/node": "^24.19.2",
+		"@types/node": "^26.6.6",
 		"@typescript-eslint/types": "^8.72.1",
 		"@unocss/eslint-plugin": "^66.12.0",
 		"axe-core": "^4.14.0",

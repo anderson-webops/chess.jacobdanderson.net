@@ -11,7 +11,7 @@ updates:
       npm-production:
         dependency-type: production
     ignore:
-      # Keep ambient types aligned with the production Node 24 runtime.
+      # Keep ambient types aligned with the production Node 26 runtime.
       - dependency-name: "@types/node"
         update-types:
           - version-update:semver-major

@@ -1,7 +1,7 @@
 {
   "name": "front-end",
   "type": "module",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": true,
   "description": "Static Nuxt frontend for Jacob Anderson Chess.",
   "author": "Jacob Anderson",
@@ -28,7 +28,7 @@
     "@nuxt/devtools": "^4.0.0",
     "@nuxt/eslint": "^1.17.0",
     "@nuxtjs/color-mode": "^4.1.0",
-    "@types/node": "^24.19.2",
+    "@types/node": "^26.6.6",
     "@unocss/eslint-config": "^66.12.0",
     "@unocss/nuxt": "^66.12.0",
     "@vue/compiler-sfc": "^3.5.44",

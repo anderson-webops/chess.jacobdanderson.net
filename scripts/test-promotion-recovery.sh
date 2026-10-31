@@ -4,7 +4,7 @@ root=$(cd -- "$(dirname -- "$0")/.." && pwd)
 node=$(realpath "$(command -v node)")
 test "$(uname -s)" = Linux
 test "$(id -u)" -ne 0
-test "$(node --version)" = v24.22.1
+test "$(node --version)" = v26.13.0
 # Root authority and writable system-command stubs exist only inside this namespace.
 timeout -k 5 120 bwrap --unshare-all --die-with-parent --new-session --uid 0 --gid 0 \
   --ro-bind /usr /usr --symlink usr/bin /bin --symlink usr/lib /lib \

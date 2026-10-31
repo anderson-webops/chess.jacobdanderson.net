@@ -22,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.1
+          node-version: 26.13.0
           package-manager-cache: false
 
       - name: Pin npm
@@ -53,7 +53,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.1
+          node-version: 26.13.0
           package-manager-cache: false
 
       - name: Stage the protected disposable-host runtime
@@ -64,10 +64,10 @@ jobs:
           node_prefix="$(dirname "$(dirname "$(command -v node)")")"
           sudo chown root:root /opt
           sudo chmod 0755 /opt
-          sudo install -d -o root -g root -m 0755 /opt/node-24.22.1
-          sudo cp -a "$node_prefix/." /opt/node-24.22.1/
-          sudo chown -R root:root /opt/node-24.22.1
-          sudo chmod -R go-w /opt/node-24.22.1
+          sudo install -d -o root -g root -m 0755 /opt/node-26.13.0
+          sudo cp -a "$node_prefix/." /opt/node-26.13.0/
+          sudo chown -R root:root /opt/node-26.13.0
+          sudo chmod -R go-w /opt/node-26.13.0
           printf 'isolated-public-source-fixture\n' | sudo tee /run/chess-source-validation-vm >/dev/null
           sudo chown root:root /run/chess-source-validation-vm
           sudo chmod 0600 /run/chess-source-validation-vm
@@ -86,7 +86,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.1
+          node-version: 26.13.0
           package-manager-cache: false
       - name: Prepare isolated artifact-test tools
         run: |
