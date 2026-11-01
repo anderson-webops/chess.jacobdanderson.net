@@ -62,3 +62,11 @@ The local deepmerge fork preserves both published entrypoints while defining
 destination keys as own data properties. Its package provenance and compatibility
 boundary are recorded in `vendor/deepmerge/UPSTREAM.md`; the security regressions
 and complete consumer-lock assertions remain part of `npm test`.
+
+Glob 14.0.3 and Minimatch 11.0.3 replace vulnerable older transitive majors.
+Nitro 2 still calls Archiver through its legacy default factory, so the local
+`archiver` workspace bridges that API to unmodified Archiver 8.0.0. Its source
+and dependency identity remain visible in the lockfile. Exact installed-graph,
+file-matching, archive-factory, Nuxt build and artifact regressions are required
+because these upgrades cross the parent packages' declared major ranges.
+Remove the bridge when Nitro natively supports the modern Archiver interface.
