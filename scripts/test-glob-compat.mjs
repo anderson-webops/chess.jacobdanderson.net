@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url'
 const scriptsDirectory = fileURLToPath(new URL('./', import.meta.url))
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
 const lockPackages = JSON.parse(readFileSync(new URL('../package-lock.json', import.meta.url), 'utf8')).packages
+const backendPackageJson = JSON.parse(readFileSync(new URL('../back-end/package.json', import.meta.url), 'utf8'))
+const backendLockPackages = JSON.parse(readFileSync(new URL('../back-end/package-lock.json', import.meta.url), 'utf8')).packages
 const requireFromNitro = createRequire(new URL('../node_modules/nitropack/package.json', import.meta.url))
 const requireFromNft = createRequire(requireFromNitro.resolve('@vercel/nft'))
 const requireFromBridge = createRequire(new URL('../vendor/archiver-nitro-compat/index.js', import.meta.url))
@@ -22,6 +24,12 @@ test('all locked glob and minimatch packages use reviewed patched majors', () =>
       assert.equal(entry.version, packageJson.overrides.glob)
     if (path.endsWith('/minimatch'))
       assert.equal(entry.version, packageJson.overrides.minimatch)
+  }
+
+  assert.equal(backendPackageJson.overrides.minimatch, packageJson.overrides.minimatch)
+  for (const [path, entry] of Object.entries(backendLockPackages)) {
+    if (path.endsWith('/minimatch'))
+      assert.equal(entry.version, backendPackageJson.overrides.minimatch)
   }
 })
 

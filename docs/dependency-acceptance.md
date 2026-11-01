@@ -70,3 +70,5 @@ and dependency identity remain visible in the lockfile. Exact installed-graph,
 file-matching, archive-factory, Nuxt build and artifact regressions are required
 because these upgrades cross the parent packages' declared major ranges.
 Remove the bridge when Nitro natively supports the modern Archiver interface.
+The standalone backend lock pins the same patched Minimatch major, and both
+full and production backend audits are required before artifact packaging.
