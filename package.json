@@ -95,7 +95,8 @@
 		"listhen": "$listhen",
 		"nanoid@^3": "3.3.18",
 		"qs": "$qs",
-		"glob": "13.0.6",
+		"glob": "14.0.3",
+		"minimatch": "11.0.4",
 		"esbuild": "^0.28.2",
 		"js-yaml": "4.3.2",
 		"launch-editor": {

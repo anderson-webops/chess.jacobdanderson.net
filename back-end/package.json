@@ -37,6 +37,7 @@
 		"qs": "file:vendor/qs-6.17.2-webops.1.tgz"
 	},
 	"overrides": {
+		"minimatch": "11.0.4",
 		"nanoid@^3": "3.3.18",
 		"qs": "$qs"
 	},
