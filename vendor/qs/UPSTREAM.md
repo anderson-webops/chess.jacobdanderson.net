@@ -1,10 +1,15 @@
 # qs compatibility patch
 
-Based on the integrity-verified npm `qs@6.17.0` distribution.
+Based on the integrity-verified npm `qs@6.17.1` distribution.
 Original archive integrity:
-`sha512-5LK5BZ2XDHMvcUJaf0CQ5HL3aVgKbpklvByC7qLSxYkfE8COEEbJg5xCHWCTqzqi0Gs4Jn5Mv5v3R38W6edscA==`.
+`sha512-jd3COkaKVgGUW+ZHyEHCG9bH7RoaaiWuMgzsIBjUMVjLAaWGWpoUAVwljVvBHxRu/2qEHnadLGZrkutYUBPQJA==`.
 The BSD-3-Clause license and original runtime dependencies are retained.
-`6.17.2-webops.1` identifies this private patch, not an upstream release.
+`6.17.2-webops.2` identifies this private patch, not an upstream release.
+
+The 6.17.1 parser fixes retain bracket-normalized prototype guards at zero
+depth, null prototypes for non-array brackets, supplementary Unicode entities
+and sparse-array value limits. The owned cross-realm and single-observation
+comma/encoder fixes remain applied, with regressions for every module interface.
 
 The upstream own-data-property input copies remain unchanged, preserving ordinary
 object prototypes when nested input contains an own `__proto__` key. Comma-array coercion recognizes

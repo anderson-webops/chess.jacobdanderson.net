@@ -165,7 +165,7 @@ def validate(root, manifest):
         name = "back-end/" + key
         if "node_modules" in PurePosixPath(name).parts and name not in visited and (root / name / "package.json").is_file():
             raise ValueError(f"unrelated dependency in runtime: {name}")
-    for name in ("back-end/node_modules/tsx", "back-end/node_modules/typescript", "back-end/node_modules/vite", "back-end/node_modules/eslint"):
+    for name in ("back-end/node_modules/tsx", "back-end/node_modules/typescript", "back-end/node_modules/typescript-native", "back-end/node_modules/vite", "back-end/node_modules/eslint"):
         if (root / name).exists():
             raise ValueError(f"development tool in runtime: {name}")
     for name in actual:

@@ -10,33 +10,27 @@ const root = fileURLToPath(new URL('..', import.meta.url))
 const require = createRequire(path.join(root, 'package.json'))
 const source = path.join(root, 'vendor/vite-plugin-vue-devtools')
 
-test('Vue DevTools keeps every upstream executable, type, client and license byte', async () => {
+test('registry Vue DevTools keeps original metadata and every upstream payload byte', async () => {
   const upstream = JSON.parse(await readFile(path.join(source, 'UPSTREAM.json'), 'utf8'))
   assert.equal(Object.keys(upstream.files).length, 38)
-  const metadata = JSON.parse(await readFile(path.join(source, 'package.json'), 'utf8'))
-  assert.deepEqual(metadata, {
-    ...upstream.package,
-    version: '9.0.0-rc.2-webops.1',
-    peerDependencies: {
-      ...upstream.package.peerDependencies,
-      '@vitejs/devtools': '^0.7.6 || ^0.8.0',
-    },
-  })
+  const installedRoot = path.dirname(require.resolve('vite-plugin-vue-devtools/package.json'))
+  const metadata = JSON.parse(await readFile(path.join(installedRoot, 'package.json'), 'utf8'))
+  assert.deepEqual(metadata, upstream.package)
   for (const [filename, digest] of Object.entries(upstream.files)) {
-    const original = await readFile(path.join(source, filename))
-    assert.equal(createHash('sha256').update(original).digest('hex'), digest, filename)
-    const installed = await readFile(path.join(path.dirname(require.resolve('vite-plugin-vue-devtools/package.json')), filename))
-    assert.ok(installed.equals(original), filename)
+    const installed = await readFile(path.join(installedRoot, filename))
+    assert.equal(createHash('sha256').update(installed).digest('hex'), digest, filename)
   }
 })
 
-test('the complete lock binds every affected Vue plugin to the reviewed package', async () => {
+test('the complete lock binds every Vue plugin to unmodified registry metadata', async () => {
+  const upstream = JSON.parse(await readFile(path.join(source, 'UPSTREAM.json'), 'utf8'))
   const lock = JSON.parse(await readFile(path.join(root, 'package-lock.json'), 'utf8'))
   const plugins = Object.entries(lock.packages).filter(([filename]) => filename.endsWith('/vite-plugin-vue-devtools'))
   assert.ok(plugins.length > 0)
   for (const [filename, metadata] of plugins) {
-    assert.equal(metadata.version, '9.0.0-rc.2-webops.1', filename)
-    assert.equal(metadata.resolved, 'file:vendor/vite-plugin-vue-devtools-9.0.0-rc.2-webops.1.tgz')
-    assert.equal(metadata.peerDependencies['@vitejs/devtools'], '^0.7.6 || ^0.8.0')
+    assert.equal(metadata.version, upstream.package.version, filename)
+    assert.equal(metadata.resolved, `https://registry.npmjs.org/vite-plugin-vue-devtools/-/vite-plugin-vue-devtools-${upstream.package.version}.tgz`)
+    assert.equal(metadata.integrity, upstream.registryIntegrity)
+    assert.equal(metadata.peerDependencies['@vitejs/devtools'], upstream.package.peerDependencies['@vitejs/devtools'])
   }
 })

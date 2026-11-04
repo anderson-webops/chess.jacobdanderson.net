@@ -66,4 +66,20 @@ for (const family of ['oxc-parser', 'rolldown'])
   assert(resolvedFamilies.has(family), `package-lock.json must include Linux ARM64 bindings for ${family}`)
 
 assert(verifiedBindings > 0, 'package-lock.json does not contain Linux ARM64 native optional packages')
+let compilerBindings = 0
+for (const [parentKey, parent] of Object.entries(packages)) {
+  if (!parentKey.endsWith('/typescript-native'))
+    continue
+  const packageName = '@typescript/typescript-linux-arm64'
+  const version = parent.optionalDependencies?.[packageName]
+  assert(version === parent.version, 'The native compiler must pin its matching Linux ARM64 executable')
+  const binding = nearestBinding(parentKey, packageName, version)
+  assert(binding, 'The native compiler Linux ARM64 executable must be locked')
+  const [bindingKey, metadata] = binding
+  assert(metadata.os?.includes('linux') && metadata.cpu?.includes('arm64'), `${bindingKey} must target Linux ARM64`)
+  assert(metadata.optional === true, `${bindingKey} must remain optional`)
+  assert(metadata.integrity?.startsWith('sha512-'), `${bindingKey} must retain registry integrity`)
+  compilerBindings += 1
+}
+assert(compilerBindings > 0, 'The backend TypeScript 7 compiler must retain Linux ARM64 support')
 console.log(`Native binding lockfile check passed for ${verifiedBindings} Linux ARM64 packages.`)

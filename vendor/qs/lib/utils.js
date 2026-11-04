@@ -110,6 +110,16 @@ var maxNumericIndex = function maxNumericIndex(obj, min) {
     return max;
 };
 
+var countElements = function countElements(arr) {
+    var count = 0;
+    for (var index = 0; index < arr.length; ++index) {
+        if (has.call(arr, index)) {
+            count += 1;
+        }
+    }
+    return count;
+};
+
 var limitedPair = function limitedPair(first, second, options) {
     var pair = [first, second];
     if (options && typeof options.arrayLimit === 'number' && pair.length > options.arrayLimit) {
@@ -130,7 +140,7 @@ var merge = function merge(target, source, options) {
     if (typeof source !== 'object' && typeof source !== 'function') {
         if (isArray(target)) {
             var nextIndex = target.length;
-            if (options && typeof options.arrayLimit === 'number' && nextIndex >= options.arrayLimit) {
+            if (options && typeof options.arrayLimit === 'number' && countElements(target) >= options.arrayLimit) {
                 if (options.throwOnLimitExceeded) {
                     throw new RangeError('Array limit exceeded. Only ' + options.arrayLimit + ' element' + (options.arrayLimit === 1 ? '' : 's') + ' allowed in an array.');
                 }
@@ -215,7 +225,7 @@ var merge = function merge(target, source, options) {
                 target[i] = item;
             }
         });
-        if (options && typeof options.arrayLimit === 'number' && target.length > options.arrayLimit) {
+        if (options && typeof options.arrayLimit === 'number' && countElements(target) > options.arrayLimit) {
             if (options.throwOnLimitExceeded) {
                 throw new RangeError('Array limit exceeded. Only ' + options.arrayLimit + ' element' + (options.arrayLimit === 1 ? '' : 's') + ' allowed in an array.');
             }
