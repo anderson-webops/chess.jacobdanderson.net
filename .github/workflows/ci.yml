@@ -56,13 +56,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends bubblewrap apparmor
+          sudo install -D -m 0755 /usr/bin/bwrap /opt/vitesse-test-tools/bwrap
           if test -d /sys/kernel/security/apparmor; then
-            printf 'abi <abi/4.0>,\ninclude <tunables/global>\nprofile vitesse-artifact-tests /usr/bin/bwrap flags=(unconfined) {\n  userns,\n}\n' | sudo tee /etc/apparmor.d/vitesse-artifact-tests >/dev/null
+            printf 'abi <abi/4.0>,\ninclude <tunables/global>\nprofile vitesse-artifact-tests /opt/vitesse-test-tools/bwrap flags=(unconfined) {\n  userns,\n}\n' | sudo tee /etc/apparmor.d/vitesse-artifact-tests >/dev/null
             sudo apparmor_parser -r /etc/apparmor.d/vitesse-artifact-tests
           fi
 
       - name: Verify protected promotion and recovery
-        run: npm run test:promotion
+        run: PATH="/opt/vitesse-test-tools:$PATH" npm run test:promotion
 
       - name: Run accessibility smoke checks
         run: npm run a11y
