@@ -44,6 +44,47 @@ for (const mode of ['module', 'global', 'amd']) {
 }
 
 for (const { name, library, input, evaluate, prototype } of variants) {
+  test(`${name}: zero-depth parsing guards the bracket-normalized prototype key`, () => {
+    for (const depth of [0, false]) {
+      for (const query of ['[toString]=blocked', '%5BhasOwnProperty%5D=blocked', '.toString=blocked']) {
+        assert.deepEqual(Object.keys(library.parse(query, { depth, allowDots: true })), [])
+      }
+    }
+    assert.equal(library.parse('[toString]=kept', { depth: 0, allowPrototypes: true }).toString, 'kept')
+    assert.equal(library.parse('[[toString]]=kept', { depth: 0 })['[toString]'], 'kept')
+    const plain = library.parse('[toString]=kept', { depth: 0, plainObjects: true })
+    assert.equal(Object.getPrototypeOf(plain), null)
+    assert.equal(plain.toString, 'kept')
+  })
+
+  test(`${name}: non-array bracket parsing preserves null object prototypes`, () => {
+    const parsed = library.parse('items[]=kept&items[hasOwnProperty]=owned', { parseArrays: false, plainObjects: true })
+    assert.equal(Object.getPrototypeOf(parsed), null)
+    assert.equal(Object.getPrototypeOf(parsed.items), null)
+    assert.equal(parsed.items[0], 'kept')
+    assert.equal(parsed.items.hasOwnProperty, 'owned')
+  })
+
+  test(`${name}: numeric entities preserve supplementary Unicode characters`, () => {
+    for (const [entity, expected] of [
+      ['65535', '\uFFFF'],
+      ['65536', '\uD800\uDC00'],
+      ['128512', '\uD83D\uDE00'],
+      ['1114111', '\uDBFF\uDFFF'],
+    ]) {
+      const parsed = library.parse(`value=%26%23${entity}%3B`, { charset: 'iso-8859-1', interpretNumericEntities: true })
+      assert.equal(parsed.value, expected)
+    }
+  })
+
+  test(`${name}: array limits count sparse values rather than empty slots`, () => {
+    const parsed = library.parse('items[19]=first&items=second', { throwOnLimitExceeded: true })
+    assert.equal(JSON.stringify(parsed), '{"items":["first","second"]}')
+    const mixed = library.parse('items[]=new&items[19]=old&items[0]=zero', { throwOnLimitExceeded: true })
+    assert.equal(JSON.stringify(mixed), '{"items":["new","old","zero"]}')
+    assert.throws(() => library.parse('items[1]=one&items[]=two&items[]=three', { arrayLimit: 2, throwOnLimitExceeded: true }), /Array limit exceeded/)
+  })
+
   test(`${name}: nested object copies retain safe prototypes and caller data`, () => {
     const original = input('{"filter":{"__proto__":{"injected":true},"label":"kept"},"items":[{"__proto__":{"injected":true},"label":"item"}]}')
     const before = JSON.stringify(original)

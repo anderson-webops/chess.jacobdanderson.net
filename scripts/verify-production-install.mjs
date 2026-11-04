@@ -18,6 +18,8 @@ for (const packageName of [
   '@types',
   'supertest',
   'tsx',
+  'typescript',
+  'typescript-native',
   'typescript-eslint',
   'vitest',
 ])

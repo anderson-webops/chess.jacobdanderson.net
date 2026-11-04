@@ -6,6 +6,7 @@ var utils = require('./utils');
 var has = Object.prototype.hasOwnProperty;
 var isArray = Array.isArray;
 var getPrototypeOf = Object.getPrototypeOf;
+var fromCharCode = String.fromCharCode;
 
 var isPlainContainer = function isPlainContainer(value) {
     if (!value || typeof value !== 'object') {
@@ -83,7 +84,12 @@ var defaults = {
 
 var interpretNumericEntities = function (str) {
     return str.replace(/&#(\d+);/g, function ($0, numberStr) {
-        return String.fromCharCode(parseInt(numberStr, 10));
+        var codePoint = parseInt(numberStr, 10);
+        if (codePoint > 0xFFFF && codePoint <= 0x10FFFF) {
+            codePoint -= 0x10000;
+            return fromCharCode(0xD800 | (codePoint >> 10), 0xDC00 | (codePoint & 0x3FF));
+        }
+        return fromCharCode(codePoint);
     });
 };
 
@@ -225,6 +231,10 @@ var parseValues = function parseQueryStringValues(str, options) {
     return obj;
 };
 
+var stripWrappingBrackets = function stripWrappingBrackets(key) {
+    return key.charAt(0) === '[' && key.charAt(key.length - 1) === ']' ? key.slice(1, -1) : key;
+};
+
 var parseObject = function (chain, val, options, valuesParsed) {
     var currentArrayLength = 0;
     if (chain.length > 0 && chain[chain.length - 1] === '[]') {
@@ -255,7 +265,7 @@ var parseObject = function (chain, val, options, valuesParsed) {
             }
         } else {
             obj = options.plainObjects ? { __proto__: null } : {};
-            var cleanRoot = root.charAt(0) === '[' && root.charAt(root.length - 1) === ']' ? root.slice(1, -1) : root;
+            var cleanRoot = stripWrappingBrackets(root);
             var decodedRoot = options.decodeDotInKeys ? cleanRoot.replace(/%2E/gi, '.') : cleanRoot;
             var index = parseInt(decodedRoot, 10);
             var isValidArrayIndex = !isNaN(index)
@@ -264,7 +274,7 @@ var parseObject = function (chain, val, options, valuesParsed) {
                 && index >= 0
                 && options.parseArrays;
             if (!options.parseArrays && decodedRoot === '') {
-                obj = { 0: leaf };
+                obj[0] = leaf;
             } else if (isValidArrayIndex && index < options.arrayLimit) {
                 obj = [];
                 obj[index] = leaf;
@@ -328,7 +338,7 @@ var splitKeyIntoSegments = function splitKeyIntoSegments(originalKey, options) {
 
     // depth <= 0 keeps the whole key as one segment
     if (options.depth <= 0) {
-        if (!options.plainObjects && has.call(Object.prototype, key)) {
+        if (!options.plainObjects && has.call(Object.prototype, stripWrappingBrackets(key))) {
             if (!options.allowPrototypes) {
                 return;
             }

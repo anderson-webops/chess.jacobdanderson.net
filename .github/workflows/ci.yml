@@ -52,5 +52,17 @@ jobs:
       - name: Validate source and deployment output
         run: npm run validate
 
+      - name: Prepare isolated Linux recovery tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends bubblewrap apparmor
+          if test -d /sys/kernel/security/apparmor; then
+            printf 'abi <abi/4.0>,\ninclude <tunables/global>\nprofile vitesse-artifact-tests /usr/bin/bwrap flags=(unconfined) {\n  userns,\n}\n' | sudo tee /etc/apparmor.d/vitesse-artifact-tests >/dev/null
+            sudo apparmor_parser -r /etc/apparmor.d/vitesse-artifact-tests
+          fi
+
+      - name: Verify protected promotion and recovery
+        run: npm run test:promotion
+
       - name: Run accessibility smoke checks
         run: npm run a11y

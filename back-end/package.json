@@ -1,6 +1,6 @@
 {
 	"name": "back-end",
-	"version": "2.1.15",
+	"version": "2.1.16",
 	"private": true,
 	"description": "Minimal Express API for the vitesse-nuxt monorepo template.",
 	"type": "module",
@@ -18,13 +18,13 @@
 		"server": "tsx watch -r dotenv/config src/server.ts",
 		"server:once": "tsx -r dotenv/config src/server.ts",
 		"start": "node dist/server.js",
-		"build": "tsc -p tsconfig.json",
-		"watch": "tsc -w",
+		"build": "node scripts/run-typescript.mjs -p tsconfig.json",
+		"watch": "node scripts/run-typescript.mjs -w",
 		"dev": "tsx watch -r dotenv/config src/server.ts",
-		"typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+		"typecheck": "node scripts/run-typescript.mjs -p tsconfig.json --noEmit && node scripts/run-typescript.mjs -p tsconfig.test.json --noEmit",
 		"test": "vitest run",
-		"lint": "eslint \"{src,test}/**/*.{js,ts}\"",
-		"lint-fix": "eslint \"{src,test}/**/*.{js,ts}\" --fix"
+		"lint": "eslint \"{src,test,scripts}/**/*.{js,mjs,ts}\"",
+		"lint-fix": "eslint \"{src,test,scripts}/**/*.{js,mjs,ts}\" --fix"
 	},
 	"keywords": [],
 	"author": "Jacob Anderson",
@@ -34,10 +34,10 @@
 		"express": "^5.3.0",
 		"express-rate-limit": "^8.7.1",
 		"helmet": "^8.3.0",
-		"qs": "file:vendor/qs-6.17.2-webops.1.tgz"
+		"qs": "file:vendor/qs-6.17.2-webops.2.tgz"
 	},
 	"overrides": {
-		"minimatch": "11.0.3",
+		"minimatch": "11.0.4",
 		"nanoid@^3": "3.3.18",
 		"qs": "$qs"
 	},
@@ -49,6 +49,7 @@
 		"supertest": "^7.3.1",
 		"tsx": "^4.23.15",
 		"typescript-eslint": "^8.72.1",
-		"vitest": "^5.0.5"
+		"typescript-native": "npm:typescript@7.0.2",
+		"vitest": "^5.1.0"
 	}
 }

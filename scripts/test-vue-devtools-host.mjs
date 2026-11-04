@@ -4,14 +4,18 @@ import { createHash } from 'node:crypto'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createServer } from 'vite'
 import { vueDevtools } from 'vite-plugin-vue-devtools'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const require = createRequire(path.join(root, 'package.json'))
-const provider = JSON.parse(await readFile(require.resolve('@vitejs/devtools/package.json'), 'utf8'))
+const frontend = createRequire(path.join(root, 'front-end/package.json'))
+const providerRequire = createRequire(frontend.resolve('@nuxt/devtools'))
+const provider = JSON.parse(await readFile(providerRequire.resolve('@vitejs/devtools/package.json'), 'utf8'))
 assert.equal(provider.version, '0.8.0')
+const { DevToolsIntegration } = await import(pathToFileURL(providerRequire.resolve('@vitejs/devtools/integration')))
+const installedPlugin = path.dirname(require.resolve('vite-plugin-vue-devtools/package.json'))
 const scratchRoot = path.join(root, '.ai-work/runs')
 await mkdir(scratchRoot, { recursive: true })
 const scratch = await mkdtemp(path.join(scratchRoot, 'vue-devtools-host-'))
@@ -32,7 +36,23 @@ try {
     configFile: false,
     root: scratch,
     cacheDir: path.join(scratch, 'cache'),
-    plugins,
+    plugins: [
+      ...await DevToolsIntegration({
+        command: 'serve',
+        root: scratch,
+        devtools: {
+          host: '127.0.0.1',
+          options: {
+            enabled: true,
+            apply: 'serve',
+            mcp: false,
+            clientAuth: true,
+            banner: () => {},
+          },
+        },
+      }),
+      ...plugins,
+    ],
     resolve: {
       alias: {
         vue: require.resolve('vue/dist/vue.esm-bundler.js', {
@@ -44,13 +64,7 @@ try {
     },
     optimizeDeps: { noDiscovery: true, include: [] },
     server: { host: '127.0.0.1', port: 0, open: false },
-    devtools: {
-      enabled: true,
-      apply: 'serve',
-      mcp: false,
-      clientAuth: true,
-      banner: () => {},
-    },
+    devtools: false,
   })
   await server.listen()
   assert.ok(initialized, 'The actual Vite DevTools 0.8 host must initialize the Vue dock')
@@ -74,7 +88,7 @@ try {
     const response = await fetch(`${origin}/__devtools__/${filename}`)
     assert.equal(response.status, 200, filename)
     const actual = Buffer.from(await response.arrayBuffer())
-    const expected = await readFile(path.join(root, 'vendor/vite-plugin-vue-devtools/client', filename))
+    const expected = await readFile(path.join(installedPlugin, 'client', filename))
     assert.equal(createHash('sha256').update(actual).digest('hex'), createHash('sha256').update(expected).digest('hex'), filename)
   }
   const clientUrl = injected.join('\n').match(/["']([^"']*virtual:vue-devtools-client[^"']*)["']/)?.[1]

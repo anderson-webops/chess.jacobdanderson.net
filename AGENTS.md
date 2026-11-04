@@ -54,6 +54,7 @@ Shared Sites policy (`../AGENTS.md` when available) applies. These essentials al
 - `npm run dev` starts the Nuxt front-end on port `3333`.
 - `npm run server` starts the Express API with `tsx watch` on port `3006`.
 - `npm run typecheck` runs both the Nuxt and back-end TypeScript checks.
+- Backend build/watch/typecheck scripts select TypeScript 7 through `back-end/scripts/run-typescript.mjs` and the `typescript-native` alias. Vue and ESLint retain their required TypeScript 6 compiler API; use the named scripts rather than an ambiguous unqualified compiler executable.
 - `npm run lint` runs ESLint across both workspaces.
 - `npm run build` generates the static front-end to `front-end/.output/public` and compiles the back-end to
   `back-end/dist`.
