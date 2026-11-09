@@ -60,7 +60,7 @@
 	},
 	"devDependencies": {
 		"@antfu/eslint-config": "^10.0.0",
-		"@netlify/functions": "^6.0.3",
+		"@netlify/functions": "^6.1.0",
 		"@types/node": "^26.6.6",
 		"@typescript-eslint/types": "^8.72.1",
 		"@unocss/eslint-plugin": "^66.12.0",
@@ -80,7 +80,7 @@
 		"simple-git-hooks": "^2.14.0",
 		"taze": "^21.3.0",
 		"typescript": "^6.0.3",
-		"vite-plugin-vue-devtools": "9.0.0-rc.2"
+		"vite-plugin-vue-devtools": "9.0.0-rc.3"
 	},
 	"allowScripts": {
 		"simple-git-hooks": false,
