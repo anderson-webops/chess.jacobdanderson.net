@@ -11,8 +11,22 @@ for (const packageName of [
   'express',
   'express-rate-limit',
   'helmet',
+  'cookie',
+  'encodeurl',
+  'raw-body',
+  'type-is',
 ])
   await access(path.join(backendModules, packageName, 'package.json'))
+
+for (const packageName of [
+  'cookie',
+  'encodeurl',
+  'raw-body',
+  'type-is',
+]) {
+  await access(path.join(backendModules, packageName, 'compat.cjs'))
+  await access(path.join(backendModules, packageName, 'dist/index.js'))
+}
 
 for (const packageName of [
   '@types',
@@ -25,7 +39,12 @@ for (const packageName of [
 ])
   await assert.rejects(access(path.join(backendModules, packageName)), undefined, `${packageName} must be absent from production`)
 
-for (const removedPath of ['node_modules', 'front-end/node_modules', 'front-end/.nuxt'])
+for (const removedPath of [
+  'node_modules',
+  'front-end/node_modules',
+  'front-end/.nuxt',
+  'build-toolchain',
+])
   await assert.rejects(access(path.join(repositoryRoot, removedPath)), undefined, `${removedPath} must be absent from production`)
 
 for (const requiredPath of [

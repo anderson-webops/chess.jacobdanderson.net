@@ -1,7 +1,9 @@
 version: 2
 updates:
   - package-ecosystem: npm
-    directory: /
+    directories:
+      - /
+      - /build-toolchain
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
@@ -35,7 +37,6 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     groups:
-      # CodeQL initialization and analysis must use the same action revision.
-      codeql:
+      codeql-actions:
         patterns:
           - "github/codeql-action/*"
