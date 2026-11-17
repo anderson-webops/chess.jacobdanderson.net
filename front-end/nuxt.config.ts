@@ -9,6 +9,7 @@ export default defineNuxtConfig({
     '@unocss/nuxt',
     '@nuxtjs/color-mode',
     '@nuxt/eslint',
+    'nuxt-explicit-imports',
   ],
 
   devtools: {
@@ -117,6 +118,10 @@ export default defineNuxtConfig({
         sortConfigKeys: true,
       },
     },
+  },
+
+  explicitImports: {
+    mode: 'strict',
   },
 
   security: {

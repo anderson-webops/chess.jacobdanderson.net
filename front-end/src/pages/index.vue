@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { definePageMeta } from '#app/composables/pages'
+import ChessGame from '~/components/ChessGame.vue'
+import DarkToggle from '~/components/DarkToggle.vue'
+
 definePageMeta({
   layout: 'home',
 })

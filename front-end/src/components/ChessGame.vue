@@ -2,6 +2,7 @@
 import type { Color, Move, PieceSymbol, Square } from 'chess.js'
 import type { BotLevel } from '~/utils/chess-game'
 import { Chess, SQUARES } from 'chess.js'
+import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef } from 'vue'
 import {
   describePosition,
   moveToUci,

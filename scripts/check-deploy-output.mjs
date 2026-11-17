@@ -42,6 +42,15 @@ function assert(condition, message) {
 }
 
 assert(JSON.parse(frontendHealth).ok === true, 'Static health check must return {"ok":true}')
+const styleDirectory = resolve(projectRoot, 'front-end/.output/public/_nuxt')
+const styleFiles = (await readdir(styleDirectory)).filter(filename => filename.endsWith('.css'))
+const styles = (await Promise.all(styleFiles.map(filename => readFile(resolve(styleDirectory, filename), 'utf8')))).join('\n')
+for (const icon of [
+  'i-carbon-sun',
+  'i-carbon-moon',
+  'i-carbon-warning',
+])
+  assert(styles.includes(icon), `Generated CSS must retain the ${icon} icon`)
 assert(/http-equiv=["']content-security-policy["']/i.test(frontendIndex), 'Generated HTML must include a CSP meta policy')
 assert(frontendNotices.includes('Copyright (c) 2025, Jeff Hlywa'), 'Browser distribution must include the chess.js notice')
 assert(frontendAssets.some(name => /^chess-bot\.worker-.+\.js$/.test(name)), 'Frontend output must include the computer worker')
