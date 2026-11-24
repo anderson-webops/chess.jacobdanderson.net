@@ -102,7 +102,21 @@ async function waitForNuxtDiagnostic(page, source) {
   try {
     const frame = await handle.asElement().contentFrame()
     assert.ok(frame, 'The actual Nuxt Problems panel must load')
-    await frame.waitForFunction(expected => document.body.textContent.includes('not assignable') && document.body.textContent.includes(expected), {}, source)
+    const diagnostic = await frame.waitForFunction(() => {
+      const entries = document.querySelectorAll('button[data-action="select"]')
+      return Array.from(entries).find(button => button.textContent.includes('not assignable') && button.textContent.includes('app.vue'))
+    })
+    try {
+      await diagnostic.asElement().click()
+    }
+    finally {
+      await diagnostic.dispose()
+    }
+    await frame.waitForFunction((expected) => {
+      const report = document.querySelector('article.mb-report')
+      return report?.querySelector('[data-message]')?.textContent.includes('not assignable')
+        && report.textContent.includes(expected)
+    }, {}, source)
     assert.equal(new URL(frame.url()).origin, new URL(page.url()).origin)
   }
   finally {
@@ -169,12 +183,15 @@ try {
   const navigation = await page.goto(origin, { waitUntil: 'domcontentloaded' })
   assert.ok(navigation?.ok(), 'Nuxt must serve the checker fixture successfully')
   await page.waitForFunction(() => document.querySelector('#count')?.textContent === 'bad')
+  phase = 'initial Nuxt browser diagnostic'
   await waitForNuxtDiagnostic(page, 'count:number="bad"')
+  phase = 'Nuxt browser diagnostic after reload'
   const reloaded = await page.reload({ waitUntil: 'domcontentloaded' })
   assert.ok(reloaded?.ok(), 'The checker fixture must reload successfully')
   await page.waitForFunction(() => document.querySelector('#count')?.textContent === 'bad')
   await waitForNuxtDiagnostic(page, 'count:number="bad"')
   for (const value of ['2', '"second"', '3']) {
+    phase = `Nuxt browser checker after edit ${value}`
     await writeFile(source, pageSource(value))
     await page.waitForFunction(expected => document.querySelector('#count')?.textContent === expected, {}, String(JSON.parse(value)))
     if (value === '"second"')

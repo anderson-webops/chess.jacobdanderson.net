@@ -760,9 +760,10 @@ native public types, admitted terminal-color modes, real ESLint diagnostics, Sty
 actual TypeScript worker error/recovery. `npm run test:checker-browser` checks
 diagnostic highlighting in Vite's checker overlay and Nuxt's native Problems
 panel, reconnection, repeated repair and clean production builds, including
-deliberately rejected type-error builds. The Nuxt fixture waits for the actual
-rendered page and diagnostic state while the live report stream stays open. The full and
-production audit commands retain original package identities in that separate
+deliberately rejected type-error builds. The Nuxt fixture opens the diagnostic
+listed for the affected file and verifies its rendered message and source
+after navigation, reload and edits. The live report stream stays open.
+Full and production audit commands retain original package identities in that separate
 graph. Application Babel providers use major 8; original-version fixtures retain
 their own reviewed dependencies. Release/provenance and host acceptance remain
 separate gates.
