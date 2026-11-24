@@ -539,10 +539,10 @@ own supported parser explicitly. Unsupported syntax produces a parsing error.
 
 The historical input archive embeds source-map-js 1.2.1, affected by
 GHSA-68fv-2mgg-jv7q. Its original bytes remain evidence, not a clean runtime.
-The maintained archive removes that embedded implementation and uses patched
-source-map-js 1.2.2. A bounded subprocess regression sends invalid and excessive
-indexed offsets through Magicast's actual map-composition path. The independent
-original-version audit graph preserves Magicast 0.5.5, Recast 0.24.0 and
+The maintained archive removes that embedded implementation and resolves the
+workspace's locked source-map-js 1.2.4. A bounded subprocess regression sends
+invalid and excessive indexed offsets through Magicast's actual map-composition
+path. The independent original-version audit graph preserves Magicast 0.5.5, Recast 0.24.0 and
 ast-types 0.16.3, with the supported external source-map-js 1.2.2 dependency;
 it does not conceal or certify the historical embedded implementation.
 
