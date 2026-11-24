@@ -144,7 +144,7 @@ def build_archive(payload, record, policies=None):
     for section, dependencies in policy.get("addedDependencies", {}).items():
         for dependency in dependencies:
             require(dependency not in metadata.get(section, {}), "Review an already declared added dependency")
-    require("bin" in metadata, "Review changed framework CLI ownership")
+    require(("bin" in metadata) == policy.get("has_bin", True), "Review changed framework CLI ownership")
     for filename in metadata.get("bin", {}).values():
         command = "package/" + filename.removeprefix("./")
         require(command in files and modes[command] == 0o755, "Required framework CLI must retain executable mode")
