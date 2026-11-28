@@ -1,7 +1,7 @@
 {
   "name": "front-end",
   "type": "module",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "private": true,
   "description": "Static Nuxt frontend for Jacob Anderson Chess.",
   "author": "Jacob Anderson",
@@ -25,10 +25,10 @@
   },
   "devDependencies": {
     "@iconify-json/carbon": "^1.2.30",
-    "@nuxt/devtools": "^4.2.0",
+    "@nuxt/devtools": "^4.2.2",
     "@nuxt/eslint": "^1.17.0",
     "@nuxtjs/color-mode": "^4.1.0",
-    "@types/node": "^26.6.6",
+    "@types/node": "^26.6.11",
     "@unocss/eslint-config": "^66.13.0",
     "@unocss/nuxt": "^66.13.0",
     "@vitejs/devtools": "0.8.3",
@@ -36,11 +36,11 @@
     "@vue/compiler-sfc": "^3.5.46",
     "c12": "4.0.0-rc.4",
     "nuxt": "file:../vendor/nuxt-4.7.0-webops.1.tgz",
-    "nuxt-explicit-imports": "0.1.0",
+    "nuxt-explicit-imports": "file:vendor/nuxt-explicit-imports-0.1.0-webops.3.tgz",
     "nuxt-security": "^2.7.0",
     "unocss": "^66.13.0",
-    "vitest": "^5.1.0",
-    "vue-router": "^5.5.0",
+    "vitest": "^5.1.2",
+    "vue-router": "^5.5.3",
     "vue-tsc": "^3.3.14"
   },
   "browserslist": [
